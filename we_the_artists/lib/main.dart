@@ -16,10 +16,10 @@ class WeTheArtistsApp extends StatelessWidget {
     return MaterialApp(
       title: 'We The Artists',
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.onboarding,
+      initialRoute: '/onboarding',
       routes: {
-        AppRoutes.onboarding: (_) => const OnboardingScreen(),
-        AppRoutes.home: (_) => const HomeScreen(),
+        '/onboarding': (_) => const OnboardingScreen(),
+        '/home': (_) => const HomeScreen(),
       },
     );
   }
