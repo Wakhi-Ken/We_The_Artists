@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'utils/app_routes.dart';
-import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 
@@ -16,10 +14,10 @@ class WeTheArtistsApp extends StatelessWidget {
     return MaterialApp(
       title: 'We The Artists',
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.onboarding,
+      initialRoute: '/onboarding',
       routes: {
-        AppRoutes.onboarding: (_) => const OnboardingScreen(),
-        AppRoutes.home: (_) => const HomeScreen(),
+        '/onboarding': (_) => const OnboardingScreen(),
+        '/home': (_) => const HomeScreen(),
       },
     );
   }
