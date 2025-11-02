@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'utils/app_routes.dart';
-import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 
