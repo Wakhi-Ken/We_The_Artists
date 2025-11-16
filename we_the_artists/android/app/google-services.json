@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1071993420986",
+    "project_id": "we-the-artists",
+    "storage_bucket": "we-the-artists.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1071993420986:android:5d26fcdc62691c3398d683",
+        "android_client_info": {
+          "package_name": "com.example.we_the_artists"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAY36ZCR24kAHgQYBcGqz-xIzHHWffOnRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
