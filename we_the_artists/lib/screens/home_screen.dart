@@ -23,7 +23,6 @@ class Post {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // Sample post list
   final List<Post> posts = const [
     Post(
       name: 'Aline Mukarurangwa',
@@ -151,9 +150,7 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                       ElevatedButton(
-                        onPressed: () {
-                          // Placeholder for follow action
-                        },
+                        onPressed: () {},
                         child: const Text('Follow'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
@@ -213,9 +210,7 @@ class HomeScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print('Floating Action Button pressed'); // Debugging
-        },
+        onPressed: () {},
         child: const Icon(Icons.add),
       ),
     );
