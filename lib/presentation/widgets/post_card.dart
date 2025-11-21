@@ -10,6 +10,7 @@ import '../bloc/comment_bloc.dart';
 import '../bloc/comment_event.dart';
 import '../bloc/comment_state.dart';
 import '../screens/artist_profile_screen.dart';
+import '../screens/image_viewer_screen.dart';
 import '../utils/avatar_gradients.dart';
 import '../utils/mention_text_helper.dart';
 import '../utils/time_helper.dart';
@@ -33,10 +34,13 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
   late AnimationController _likeAnimationController;
   late Animation<double> _likeAnimation;
   bool _showLikeAnimation = false;
+  int _currentImageIndex = 0;
+  late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     _likeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -59,6 +63,7 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
+    _pageController.dispose();
     _likeAnimationController.dispose();
     super.dispose();
   }
@@ -415,50 +420,100 @@ class _PostCardState extends State<PostCard> with SingleTickerProviderStateMixin
             ],
             if (widget.post.imageUrls.isNotEmpty) ...[
               const SizedBox(height: 12),
-              GestureDetector(
-                onDoubleTap: _handleDoubleTap,
+              SizedBox(
+                height: 300,
                 child: Stack(
-                  alignment: Alignment.center,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        'assets/images/${widget.post.imageUrls[0]}.jpg',
-                        width: double.infinity,
-                        height: 300,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: double.infinity,
-                            height: 300,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(12),
+                    PageView.builder(
+                      controller: _pageController,
+                      itemCount: widget.post.imageUrls.length,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentImageIndex = index;
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onDoubleTap: _handleDoubleTap,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ImageViewerScreen(
+                                  imageUrls: widget.post.imageUrls,
+                                  initialIndex: index,
+                                ),
+                              ),
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              widget.post.imageUrls[index],
+                              width: double.infinity,
+                              height: 300,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 300,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.image, size: 60, color: Colors.grey),
+                                  ),
+                                );
+                              },
                             ),
-                            child: const Center(
-                              child: Icon(Icons.image, size: 60, color: Colors.grey),
-                            ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                    // Animated heart overlay on double-tap
                     if (_showLikeAnimation)
-                      AnimatedBuilder(
-                        animation: _likeAnimation,
-                        builder: (context, child) {
-                          return Transform.scale(
-                            scale: _likeAnimation.value,
-                            child: Opacity(
-                              opacity: 1.0 - _likeAnimation.value,
-                              child: const Icon(
-                                Icons.favorite,
-                                color: Colors.red,
-                                size: 120,
+                      Positioned.fill(
+                        child: Center(
+                          child: AnimatedBuilder(
+                            animation: _likeAnimation,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale: _likeAnimation.value,
+                                child: Opacity(
+                                  opacity: 1.0 - _likeAnimation.value,
+                                  child: const Icon(
+                                    Icons.favorite,
+                                    color: Colors.red,
+                                    size: 120,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    if (widget.post.imageUrls.length > 1)
+                      Positioned(
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            widget.post.imageUrls.length,
+                            (index) => Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _currentImageIndex == index
+                                    ? Colors.white
+                                    : Colors.white.withOpacity(0.4),
                               ),
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                   ],
                 ),

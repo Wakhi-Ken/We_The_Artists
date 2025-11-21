@@ -2,6 +2,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class MentionTextHelper {
+  /// Extract all mentioned usernames from text
+  static List<String> extractMentions(String text) {
+    final pattern = RegExp(r'@(\w+)');
+    final matches = pattern.allMatches(text);
+    return matches.map((match) => match.group(1)!).toList();
+  }
+
   static TextSpan buildMentionText(
     String text,
     BuildContext context, {

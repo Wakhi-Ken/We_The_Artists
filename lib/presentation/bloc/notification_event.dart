@@ -23,3 +23,16 @@ class MarkAsRead extends NotificationEvent {
 class ClearAllNotifications extends NotificationEvent {
   const ClearAllNotifications();
 }
+
+class AddMentionNotification extends NotificationEvent {
+  final String mentionerUserId;
+  final String mentionerUserName;
+
+  const AddMentionNotification({
+    required this.mentionerUserId,
+    required this.mentionerUserName,
+  });
+
+  @override
+  List<Object?> get props => [mentionerUserId, mentionerUserName];
+}

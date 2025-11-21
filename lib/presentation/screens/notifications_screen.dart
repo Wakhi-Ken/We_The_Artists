@@ -28,6 +28,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.comment;
       case 'follow':
         return Icons.person_add;
+      case 'mention':
+        return Icons.alternate_email;
       default:
         return Icons.notifications;
     }
@@ -41,6 +43,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Colors.blue;
       case 'follow':
         return Colors.green;
+      case 'mention':
+        return Colors.purple;
       default:
         return Colors.grey;
     }

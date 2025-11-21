@@ -10,6 +10,7 @@ import '../widgets/post_card.dart';
 import '../widgets/theme_switcher.dart';
 import 'notifications_screen.dart';
 import 'messages_screen.dart';
+import 'create_post_screen.dart';
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});

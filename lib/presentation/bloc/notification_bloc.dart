@@ -4,10 +4,13 @@ import 'notification_event.dart';
 import 'notification_state.dart';
 
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
+  final List<NotificationEntity> _notifications = [];
+
   NotificationBloc() : super(const NotificationInitial()) {
     on<LoadNotifications>(_onLoadNotifications);
     on<MarkAsRead>(_onMarkAsRead);
     on<ClearAllNotifications>(_onClearAll);
+    on<AddMentionNotification>(_onAddMentionNotification);
   }
 
   Future<void> _onLoadNotifications(
@@ -17,8 +20,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     try {
       await Future.delayed(const Duration(milliseconds: 300));
 
-      final notifications = _getMockNotifications();
-      emit(NotificationLoaded(notifications));
+      final mockNotifications = _getMockNotifications();
+      // Combine mock notifications with real mention notifications
+      final allNotifications = [...mockNotifications, ..._notifications];
+      // Sort by createdAt descending
+      allNotifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      emit(NotificationLoaded(allNotifications));
     } catch (e) {
       emit(NotificationError(e.toString()));
     }
@@ -49,7 +56,29 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
   Future<void> _onClearAll(
       ClearAllNotifications event, Emitter<NotificationState> emit) async {
+    _notifications.clear();
     emit(const NotificationLoaded([]));
+  }
+
+  Future<void> _onAddMentionNotification(
+      AddMentionNotification event, Emitter<NotificationState> emit) async {
+    final newNotification = NotificationEntity(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      type: 'mention',
+      userId: event.mentionerUserId,
+      userName: event.mentionerUserName,
+      message: 'mentioned you in a post',
+      createdAt: DateTime.now(),
+      isRead: false,
+    );
+
+    _notifications.insert(0, newNotification);
+
+    if (state is NotificationLoaded) {
+      final currentState = state as NotificationLoaded;
+      final updated = [newNotification, ...currentState.notifications];
+      emit(NotificationLoaded(updated));
+    }
   }
 
   List<NotificationEntity> _getMockNotifications() {
@@ -80,6 +109,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         message: 'started following you',
         createdAt: DateTime.now().subtract(const Duration(hours: 5)),
         isRead: true,
+      ),
+      NotificationEntity(
+        id: '4',
+        type: 'mention',
+        userId: '2',
+        userName: 'Sarah Johnson',
+        message: 'mentioned you in a post',
+        createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+        isRead: false,
       ),
     ];
   }
