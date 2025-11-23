@@ -26,49 +26,42 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<void> _pickImages() async {
     final List<XFile> images = await _picker.pickMultiImage();
     if (images.isNotEmpty) {
-      setState(() {
-        _selectedImages.addAll(images);
-      });
+      setState(() => _selectedImages.addAll(images));
     }
   }
 
   Future<void> _takePhoto() async {
     final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
     if (photo != null) {
-      setState(() {
-        _selectedImages.add(photo);
-      });
+      setState(() => _selectedImages.add(photo));
     }
   }
 
   void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
+    setState(() => _selectedImages.removeAt(index));
   }
 
   void _addTag() {
     final tag = _tagController.text.trim();
-    if (tag.isNotEmpty && !_tags.contains(tag)) {
+    if (tag.isNotEmpty && tag.length <= 20 && !_tags.contains(tag)) {
       setState(() {
         _tags.add(tag);
         _tagController.clear();
       });
+    } else if (tag.length > 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tag too long (max 20 characters)')),
+      );
     }
   }
 
   void _removeTag(String tag) {
-    setState(() {
-      _tags.remove(tag);
-    });
+    setState(() => _tags.remove(tag));
   }
 
   void _publishPost() {
     if (_contentController.text.trim().isEmpty && _selectedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add content or images')),
-      );
-      return;
+      return; // Publish button will be disabled in this case
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -79,18 +72,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool canPublish =
+        _contentController.text.isNotEmpty || _selectedImages.isNotEmpty;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Post'),
         actions: [
           TextButton(
-            onPressed: _publishPost,
+            onPressed: canPublish ? _publishPost : null,
             child: const Text(
               'Publish',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -107,9 +100,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 hintText: 'Share your thoughts about your artwork...',
                 border: OutlineInputBorder(),
               ),
+              onChanged: (_) => setState(() {}), // Updates Publish button
             ),
             const SizedBox(height: 16),
-            if (_selectedImages.isNotEmpty) ...[
+            if (_selectedImages.isEmpty)
+              Container(
+                height: 120,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text('No images selected'),
+              )
+            else
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -125,7 +129,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             image: DecorationImage(
-                              image: FileImage(File(_selectedImages[index].path)),
+                              image: FileImage(
+                                File(_selectedImages[index].path),
+                              ),
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -154,8 +160,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
@@ -178,10 +183,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             const SizedBox(height: 24),
             const Text(
               'Tags',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
@@ -207,21 +209,35 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            if (_tags.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _tags
-                    .map(
-                      (tag) => Chip(
-                        label: Text('#$tag'),
-                        deleteIcon: const Icon(Icons.close, size: 16),
-                        onDeleted: () => _removeTag(tag),
-                      ),
-                    )
-                    .toList(),
+            if (_tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _tags
+                      .map(
+                        (tag) => Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Chip(
+                            label: Text('#$tag'),
+                            deleteIcon: const Icon(Icons.close, size: 16),
+                            onDeleted: () => _removeTag(tag),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => setState(() => _tags.clear()),
+                    child: const Text('Clear All Tags'),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

@@ -66,7 +66,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -87,9 +87,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              context
-                  .read<NotificationBloc>()
-                  .add(const ClearAllNotifications());
+              context.read<NotificationBloc>().add(
+                const ClearAllNotifications(),
+              );
             },
             child: const Text('Clear all'),
           ),
@@ -113,10 +113,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'No notifications yet',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -136,8 +133,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   color: notification.isRead
                       ? Colors.transparent
                       : theme.brightness == Brightness.dark
-                          ? Colors.blue.withOpacity(0.1)
-                          : Colors.blue.withOpacity(0.05),
+                      ? Colors.blue.withOpacity(0.1)
+                      : Colors.blue.withOpacity(0.05),
                   child: ListTile(
                     leading: Stack(
                       children: [
@@ -190,16 +187,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                     subtitle: Text(
                       _formatTime(notification.createdAt),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     onTap: () {
                       if (!notification.isRead) {
-                        context
-                            .read<NotificationBloc>()
-                            .add(MarkAsRead(notification.id));
+                        context.read<NotificationBloc>().add(
+                          MarkAsRead(notification.id),
+                        );
                       }
                     },
                   ),

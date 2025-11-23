@@ -14,6 +14,7 @@ class _RegisterScreenState extends ConsumerState<SignUpScreen> {
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
+  final confirmPasswordCtrl = TextEditingController();
   bool loading = false;
   String? message;
 
@@ -27,16 +28,43 @@ class _RegisterScreenState extends ConsumerState<SignUpScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name')),
-            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: passwordCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
-            TextField(controller: passwordCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm Password')),
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: 'Full Name'),
+            ),
+            TextField(
+              controller: emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+            TextField(
+              controller: passwordCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
+            TextField(
+              controller: confirmPasswordCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
+            ),
             const SizedBox(height: 20),
-            if (message != null) Text(message!, style: const TextStyle(color: Colors.green)),
+            if (message != null)
+              Text(
+                message!,
+                style: TextStyle(
+                  color: message!.startsWith('Verification')
+                      ? Colors.green
+                      : Colors.red,
+                ),
+              ),
             ElevatedButton(
               onPressed: loading
                   ? null
                   : () async {
+                      if (passwordCtrl.text != confirmPasswordCtrl.text) {
+                        setState(() => message = 'Passwords do not match');
+                        return;
+                      }
+
                       setState(() => loading = true);
                       try {
                         await authService.signUp(
@@ -44,15 +72,26 @@ class _RegisterScreenState extends ConsumerState<SignUpScreen> {
                           passwordCtrl.text.trim(),
                           nameCtrl.text.trim(),
                         );
-                        setState(() => message =
-                            'Verification email sent. Please check your inbox before logging in.');
+                        setState(
+                          () => message =
+                              'Verification email sent. Please check your inbox before logging in.',
+                        );
                       } on FirebaseAuthException catch (e) {
                         setState(() => message = e.message);
                       } finally {
                         setState(() => loading = false);
                       }
                     },
-              child: loading ? const CircularProgressIndicator() : const Text('Register'),
+              child: loading
+                  ? const CircularProgressIndicator()
+                  : const Text('Register'),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/login'); // Go to login
+              },
+              child: const Text('Already have an account? Login'),
             ),
           ],
         ),

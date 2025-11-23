@@ -10,7 +10,7 @@ import '../bloc/theme_event.dart';
 import '../bloc/theme_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
-import 'edit_profile_screen.dart';
+import 'package:we_the_artists/presentation/screens/edit_profile_screen_v2.dart';
 import 'recommendations_screen.dart';
 
 class MyAccountScreen extends StatefulWidget {
@@ -56,8 +56,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const RecommendationsScreen(),
+                    builder: (context) => const RecommendationsScreen(),
                   ),
                 );
               },
@@ -85,7 +84,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -181,7 +180,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                       final myPosts = state.posts
                           .where((post) => post.userId == '1')
                           .toList();
-                      
+
                       if (myPosts.isEmpty) {
                         return const Center(
                           child: Text(
@@ -190,7 +189,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                           ),
                         );
                       }
-                      
+
                       return ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         itemCount: myPosts.length,

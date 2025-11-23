@@ -10,6 +10,10 @@ import '../widgets/post_card.dart';
 import '../widgets/theme_switcher.dart';
 import 'notifications_screen.dart';
 import 'messages_screen.dart';
+import 'package:we_the_artists/presentation/screens/create_post_screen_v2.dart';
+import 'package:we_the_artists/screens/community_screen.dart';
+import 'package:we_the_artists/screens/wellness_screen.dart';
+import 'package:we_the_artists/presentation/screens/my_account_screen.dart'; // Profile screen import
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
@@ -19,6 +23,8 @@ class HomeFeedScreen extends StatefulWidget {
 }
 
 class _HomeFeedScreenState extends State<HomeFeedScreen> {
+  int _currentIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -26,114 +32,257 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     context.read<NotificationBloc>().add(const LoadNotifications());
   }
 
+  void _onTabTapped(int index) {
+    setState(() => _currentIndex = index);
+  }
+
+  final List<Widget> _screens = [
+    const HomeFeedContent(),
+    const CommunityScreen(),
+    WellnessScreen(),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
+        title: Text(
+          _currentIndex == 0
+              ? 'Artist Feed'
+              : _currentIndex == 1
+              ? 'Community'
+              : 'Wellness',
+        ),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        title: Text(
-          'Artist Feed',
-          style: TextStyle(
-            color: theme.textTheme.bodyLarge?.color,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          const ThemeSwitcher(),
-          BlocBuilder<NotificationBloc, NotificationState>(
-            builder: (context, state) {
-              int unreadCount = 0;
-              if (state is NotificationLoaded) {
-                unreadCount = state.unreadCount;
-              }
-
-              return Stack(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications_outlined,
-                        color: theme.iconTheme.color),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  if (unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '$unreadCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+        actions: _currentIndex == 0
+            ? [
+                const ThemeSwitcher(),
+                BlocBuilder<NotificationBloc, NotificationState>(
+                  builder: (context, state) {
+                    int unreadCount = 0;
+                    if (state is NotificationLoaded) {
+                      unreadCount = state.notifications
+                          .where((n) => !n.isRead)
+                          .length;
+                    }
+                    return Stack(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications_outlined,
+                            color: theme.iconTheme.color,
                           ),
-                          textAlign: TextAlign.center,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificationsScreen(),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.message_outlined, color: theme.iconTheme.color),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MessagesScreen(),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
-              );
-            },
+                IconButton(
+                  icon: Icon(
+                    Icons.message_outlined,
+                    color: theme.iconTheme.color,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                    );
+                  },
+                ),
+              ]
+            : null,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text(
+                'We The Artists',
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyAccountScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications),
+              title: const Text('Notifications'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat),
+              title: const Text('Chats'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event),
+              title: const Text('Events'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/event');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.app_registration),
+              title: const Text('Sign Up'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/sign_up');
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                // Navigate to Sign Up screen and remove all previous routes
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/sign_up',
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.self_improvement),
+            label: 'Wellness',
           ),
         ],
       ),
-      body: BlocBuilder<PostBloc, PostState>(
-        builder: (context, state) {
-          if (state is PostLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is PostLoaded) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<PostBloc>().add(const LoadPosts());
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: state.posts.length,
-                itemBuilder: (context, index) {
-                  return PostCard(
-                    post: state.posts[index],
-                    isOwnPost: state.posts[index].userId == '1',
+      floatingActionButton: _currentIndex == 0
+          ? MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreatePostScreen()),
                   );
                 },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
+                ),
               ),
-            );
-          } else if (state is PostError) {
-            return Center(child: Text('Error: ${state.message}'));
-          }
-          return const Center(child: Text('No posts yet'));
-        },
-      ),
+            )
+          : null,
+    );
+  }
+}
+
+/// -----------------
+/// Feed Content
+/// -----------------
+class HomeFeedContent extends StatelessWidget {
+  const HomeFeedContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<PostBloc, PostState>(
+      builder: (context, state) {
+        if (state is PostLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is PostLoaded) {
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<PostBloc>().add(const LoadPosts());
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: state.posts.length,
+              itemBuilder: (context, index) {
+                final post = state.posts[index];
+                return PostCard(post: post, isOwnPost: post.userId == '1');
+              },
+            ),
+          );
+        } else if (state is PostError) {
+          return Center(child: Text('Error: ${state.message}'));
+        }
+        return const Center(child: Text('No posts yet'));
+      },
     );
   }
 }

@@ -26,27 +26,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
-            TextField(controller: passwordCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+            TextField(
+              controller: emailCtrl,
+              decoration: const InputDecoration(labelText: 'Email'),
+            ),
+            TextField(
+              controller: passwordCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
             const SizedBox(height: 20),
-            if (error != null) Text(error!, style: const TextStyle(color: Colors.red)),
+            if (error != null)
+              Text(error!, style: const TextStyle(color: Colors.red)),
             ElevatedButton(
               onPressed: loading
                   ? null
                   : () async {
                       setState(() => loading = true);
                       try {
-                        await authService.signIn(emailCtrl.text.trim(), passwordCtrl.text.trim());
+                        await authService.signIn(
+                          emailCtrl.text.trim(),
+                          passwordCtrl.text.trim(),
+                        );
+                        // Navigate to home screen after successful login
+                        if (mounted) {
+                          Navigator.pushReplacementNamed(context, '/home');
+                        }
                       } on FirebaseAuthException catch (e) {
                         setState(() => error = e.message);
                       } finally {
                         setState(() => loading = false);
                       }
                     },
-              child: loading ? const CircularProgressIndicator() : const Text('Login'),
+              child: loading
+                  ? const CircularProgressIndicator()
+                  : const Text('Login'),
             ),
             TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/register'),
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, '/signup');
+              },
               child: const Text('Don’t have an account? Sign up'),
             ),
           ],
