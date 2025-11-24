@@ -11,6 +11,7 @@ import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
 import '../widgets/post_card.dart';
 import '../widgets/theme_switcher.dart';
+import 'package:we_the_artists/presentation/bloc/comment_bloc.dart';
 
 import 'notifications_screen.dart';
 import 'messages_screen.dart';
@@ -50,223 +51,219 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          _currentIndex == 0
-              ? 'Artist Feed'
-              : _currentIndex == 1
-              ? 'Community'
-              : 'Wellness',
-        ),
-        backgroundColor: theme.appBarTheme.backgroundColor,
-        elevation: 0,
-        actions: _currentIndex == 0
-            ? [
-                const ThemeSwitcher(),
+    return BlocProvider<CommentBloc>(
+      // Providing CommentBloc here
+      create: (_) => CommentBloc(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            _currentIndex == 0
+                ? 'Artist Feed'
+                : _currentIndex == 1
+                ? 'Community'
+                : 'Wellness',
+          ),
+          backgroundColor: theme.appBarTheme.backgroundColor,
+          elevation: 0,
+          actions: _currentIndex == 0
+              ? [
+                  const ThemeSwitcher(),
 
-                // 🔔 Notifications with unread badge
-                BlocBuilder<NotificationBloc, NotificationState>(
-                  builder: (context, state) {
-                    int unreadCount = 0;
-                    if (state is NotificationLoaded) {
-                      unreadCount = state.unreadCount;
-                    }
+                  // 🔔 Notifications with unread badge
+                  BlocBuilder<NotificationBloc, NotificationState>(
+                    builder: (context, state) {
+                      int unreadCount = 0;
+                      if (state is NotificationLoaded) {
+                        unreadCount = state.unreadCount;
+                      }
 
-                    return Stack(
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.notifications_outlined,
-                            color: theme.iconTheme.color,
+                      return Stack(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.notifications_outlined,
+                              color: theme.iconTheme.color,
+                            ),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const NotificationsScreen(),
+                                ),
+                              );
+                            },
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const NotificationsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        if (unreadCount > 0)
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                '$unreadCount',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                          if (unreadCount > 0)
+                            Positioned(
+                              right: 8,
+                              top: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  '$unreadCount',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-
-                // 💬 Messages
-                IconButton(
-                  icon: Icon(
-                    Icons.message_outlined,
-                    color: theme.iconTheme.color,
+                        ],
+                      );
+                    },
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MessagesScreen()),
-                    );
-                  },
-                ),
-              ]
+
+                  // 💬 Messages
+                  IconButton(
+                    icon: Icon(
+                      Icons.message_outlined,
+                      color: theme.iconTheme.color,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MessagesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ]
+              : null,
+        ),
+        // Your Drawer and Bottom NavigationBar code here
+        drawer: Drawer(
+          child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            future: FirebaseFirestore.instance
+                .collection('Users')
+                .doc(FirebaseAuth.instance.currentUser!.uid)
+                .get(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final userData = snapshot.data!.data() ?? {};
+
+              final name = userData['name'] ?? 'User';
+              final role = userData['role'] ?? '';
+              final avatar =
+                  userData['avatarUrl'] ??
+                  'https://ui-avatars.com/api/?name=$name';
+
+              return ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  UserAccountsDrawerHeader(
+                    decoration: const BoxDecoration(color: Colors.blue),
+                    accountName: Text(name),
+                    accountEmail: Text(role),
+                    currentAccountPicture: CircleAvatar(
+                      backgroundImage: NetworkImage(avatar),
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.person),
+                    title: const Text('Profile'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyAccountScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.notifications),
+                    title: const Text('Notifications'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.chat),
+                    title: const Text('Chats'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MessagesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.event),
+                    title: const Text('Events'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/event');
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Logout'),
+                    onTap: () async {
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/signup',
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        body: _screens[_currentIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onTabTapped,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'Community',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.self_improvement),
+              label: 'Wellness',
+            ),
+          ],
+        ),
+        floatingActionButton: _currentIndex == 0
+            ? FloatingActionButton(
+                backgroundColor: Colors.blue,
+                child: const Icon(Icons.add),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreatePostScreen()),
+                  );
+                },
+              )
             : null,
       ),
-
-      // -----------------------------
-      // 🎨 Drawer with user info
-      // -----------------------------
-      drawer: Drawer(
-        child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-          future: FirebaseFirestore.instance
-              .collection('Users')
-              .doc(FirebaseAuth.instance.currentUser!.uid)
-              .get(),
-
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            final userData = snapshot.data!.data() ?? {};
-
-            final name = userData['name'] ?? 'User';
-            final role = userData['role'] ?? '';
-            final avatar =
-                userData['avatarUrl'] ??
-                'https://ui-avatars.com/api/?name=$name';
-
-            return ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                UserAccountsDrawerHeader(
-                  decoration: const BoxDecoration(color: Colors.blue),
-                  accountName: Text(name),
-                  accountEmail: Text(role),
-                  currentAccountPicture: CircleAvatar(
-                    backgroundImage: NetworkImage(avatar),
-                  ),
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.person),
-                  title: const Text('Profile'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const MyAccountScreen(),
-                      ),
-                    );
-                  },
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.notifications),
-                  title: const Text('Notifications'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationsScreen(),
-                      ),
-                    );
-                  },
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.chat),
-                  title: const Text('Chats'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MessagesScreen()),
-                    );
-                  },
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.event),
-                  title: const Text('Events'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/event');
-                  },
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text('Logout'),
-                  onTap: () async {
-                    await FirebaseAuth.instance.signOut();
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/signup',
-                      (route) => false,
-                    );
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-
-      body: _screens[_currentIndex],
-
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.self_improvement),
-            label: 'Wellness',
-          ),
-        ],
-      ),
-
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-              backgroundColor: Colors.blue,
-              child: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CreatePostScreen()),
-                );
-              },
-            )
-          : null,
     );
   }
 }
 
-//
-// FEED CONTENT
-//
 class HomeFeedContent extends StatelessWidget {
   const HomeFeedContent({super.key});
 
@@ -275,6 +272,7 @@ class HomeFeedContent extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return BlocBuilder<PostBloc, PostState>(
+      // Home feed content builder
       builder: (context, state) {
         if (state is PostLoading) {
           return const Center(child: CircularProgressIndicator());

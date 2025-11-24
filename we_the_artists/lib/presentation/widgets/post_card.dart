@@ -1,6 +1,5 @@
-import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -141,7 +140,8 @@ class _PostCardState extends State<PostCard>
               // Comment List
               Expanded(
                 child: BlocProvider.value(
-                  value: context.read<CommentBloc>(),
+                  value: context
+                      .read<CommentBloc>(), // Provide CommentBloc here
                   child: BlocBuilder<CommentBloc, CommentState>(
                     builder: (context, state) {
                       if (state is CommentLoading) {
