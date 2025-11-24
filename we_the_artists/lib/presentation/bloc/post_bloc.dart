@@ -6,6 +6,8 @@ import 'post_event.dart';
 import 'post_state.dart';
 
 class PostBloc extends Bloc<PostEvent, PostState> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   PostBloc() : super(const PostInitial()) {
     on<LoadPosts>(_onLoadPosts);
     on<ToggleLike>(_onToggleLike);
@@ -14,14 +16,16 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<OpenComments>(_onOpenComments);
   }
 
-  // Load posts from Firestore
+  // Load posts from Firestore with real-time updates
   Future<void> _onLoadPosts(LoadPosts event, Emitter<PostState> emit) async {
     emit(const PostLoading());
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('posts')
+          .collection('Posts')
           .orderBy('createdAt', descending: true)
           .get();
+
+      print("Posts fetched successfully"); // Debugging line
 
       final posts = snapshot.docs.map((doc) {
         final data = doc.data();
@@ -52,8 +56,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         );
       }).toList();
 
-      emit(PostLoaded(posts));
+      print("Posts loaded: ${posts.length}"); // Debugging line
+
+      emit(PostLoaded(posts)); // Emitting PostLoaded state
     } catch (e) {
+      print('Error loading posts: $e'); // Debugging line
       emit(PostError(e.toString()));
     }
   }
@@ -64,10 +71,9 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final currentState = state as PostLoaded;
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == event.postId) {
-          return post.copyWith(
-            isLiked: !post.isLiked,
-            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-          );
+          final updatedLikes = post.isLiked ? post.likes - 1 : post.likes + 1;
+          _updatePostLikes(post.id, updatedLikes); // Sync with Firestore
+          return post.copyWith(isLiked: !post.isLiked, likes: updatedLikes);
         }
         return post;
       }).toList();
@@ -82,6 +88,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final currentState = state as PostLoaded;
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == event.postId) {
+          _updatePostSaved(post.id, !post.isSaved); // Sync with Firestore
           return post.copyWith(isSaved: !post.isSaved);
         }
         return post;
@@ -112,4 +119,26 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     OpenComments event,
     Emitter<PostState> emit,
   ) async {}
+
+  // Update Firestore post's like count
+  Future<void> _updatePostLikes(String postId, int newLikes) async {
+    try {
+      await _firestore.collection('Posts').doc(postId).update({
+        'likes': newLikes,
+      });
+    } catch (e) {
+      // Handle errors or logging
+    }
+  }
+
+  // Update Firestore post's saved state
+  Future<void> _updatePostSaved(String postId, bool isSaved) async {
+    try {
+      await _firestore.collection('Posts').doc(postId).update({
+        'isSaved': isSaved,
+      });
+    } catch (e) {
+      // Handle errors or logging
+    }
+  }
 }
