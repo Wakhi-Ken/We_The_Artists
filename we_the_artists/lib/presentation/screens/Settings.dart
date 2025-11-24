@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/theme_bloc.dart';
-import '../bloc/theme_event.dart';
-import '../bloc/theme_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:we_the_artists/presentation/widgets/theme_switcher.dart'; // Assuming theme switcher is used for dark/light mode
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,14 +10,30 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  String _selectedLanguage = 'en'; // Default language
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // You can safely access inherited widgets like MediaQuery here if needed
-    final mediaQuery = MediaQuery.of(context);
-    // Perform any operations that require context or mediaQuery data here
-    // For example, print the width of the screen
-    print('Screen width: ${mediaQuery.size.width}');
+  void initState() {
+    super.initState();
+    _loadLanguagePreference();
+  }
+
+  // Load the language preference from SharedPreferences
+  _loadLanguagePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _selectedLanguage =
+          prefs.getString('language') ?? 'en'; // Default to 'en'
+    });
+  }
+
+  // Save the selected language to SharedPreferences
+  _saveLanguagePreference(String language) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language', language);
+    setState(() {
+      _selectedLanguage = language;
+    });
   }
 
   @override
@@ -28,72 +42,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text("Settings"),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(
-              theme.brightness == Brightness.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
-              color: theme.iconTheme.color,
-            ),
+            icon: const Icon(Icons.settings),
             onPressed: () {
-              // Toggle theme on button press
-              context.read<ThemeBloc>().add(const ToggleTheme());
+              // You can navigate to settings screen
             },
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Settings',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: Column(
+        children: [
+          Container(
+            color: theme.cardColor,
+            child: ListTile(
+              title: const Text("Language"),
+              subtitle: Text(
+                _selectedLanguage == 'en' ? 'English' : 'Other Language',
+                style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+              ),
+              onTap: () async {
+                // Toggle between English and another language
+                String newLanguage = _selectedLanguage == 'en' ? 'es' : 'en';
+                _saveLanguagePreference(newLanguage);
+
+                // Optionally update your app language here
+                // For example, using the `Locale` class with your `MaterialApp` settings
+              },
             ),
-            const SizedBox(height: 20),
-            ListTile(
+          ),
+          const Divider(),
+          Container(
+            color: theme.cardColor,
+            child: ListTile(
               leading: const Icon(Icons.notifications),
               title: const Text('Notifications'),
               onTap: () {
-                // Navigate to Notification Settings
+                // Navigate to Notifications Screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsScreen(),
+                  ),
+                );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: const Text('Language'),
-              onTap: () {
-                // Navigate to Language Settings
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text('Privacy'),
-              onTap: () {
-                // Navigate to Privacy Settings
-              },
-            ),
-            const Divider(),
-            ListTile(
+          ),
+          Container(
+            color: theme.cardColor,
+            child: ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                // Handle logout
-                // Example: FirebaseAuth.instance.signOut();
+                // Perform logout action (like FirebaseAuth sign out)
+                // Add your logout logic here
+
                 Navigator.pushNamedAndRemoveUntil(
                   context,
-                  '/signup', // Adjust based on your app's navigation flow
+                  '/signup', // Adjust the route as needed
                   (route) => false,
                 );
               },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+class NotificationsScreen extends StatelessWidget {
+  const NotificationsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Notifications")),
+      body: const Center(child: Text('Here are your notifications!')),
     );
   }
 }
