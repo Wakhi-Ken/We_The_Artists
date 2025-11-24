@@ -9,24 +9,32 @@ class AuthService {
   Stream<User?> authStateChanges() => _auth.authStateChanges();
 
   // Register new user with email verification
-  Future<User?> signUp(String email, String password, String displayName) async {
+  Future<User?> signUp(
+    String email,
+    String password,
+    String displayName,
+  ) async {
     final cred = await _auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
 
-    await cred.user!.updateDisplayName(displayName);
-    await cred.user!.sendEmailVerification();
+    final user = cred.user!;
+    await user.updateDisplayName(displayName);
+    await user.sendEmailVerification();
 
     // Save profile to Firestore
-    await _db.collection('users').doc(cred.user!.uid).set({
-      'displayName': displayName,
+    await _db.collection('Users').doc(user.uid).set({
+      'name': displayName,
       'email': email,
-      'verified': false,
+      'role': '',
+      'bio': '',
+      'avatarUrl': '', // default avatar can be added here
       'createdAt': FieldValue.serverTimestamp(),
+      'verified': false,
     });
 
-    return cred.user;
+    return user;
   }
 
   // Login — only allow if verified
@@ -42,6 +50,20 @@ class AuthService {
         code: 'email-not-verified',
         message: 'Please verify your email before logging in.',
       );
+    }
+
+    // Ensure Firestore profile exists
+    final userDoc = await _db.collection('Users').doc(cred.user!.uid).get();
+    if (!userDoc.exists) {
+      await _db.collection('Users').doc(cred.user!.uid).set({
+        'name': cred.user!.displayName ?? '',
+        'email': email,
+        'role': '',
+        'bio': '',
+        'avatarUrl': '',
+        'createdAt': FieldValue.serverTimestamp(),
+        'verified': true,
+      });
     }
 
     return cred.user;

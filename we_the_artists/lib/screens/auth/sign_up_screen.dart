@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/auth_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../providers/auth_provider.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<SignUpScreen> createState() => _RegisterScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _RegisterScreenState extends ConsumerState<SignUpScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final nameCtrl = TextEditingController();
   final emailCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
@@ -51,7 +52,7 @@ class _RegisterScreenState extends ConsumerState<SignUpScreen> {
               Text(
                 message!,
                 style: TextStyle(
-                  color: message!.startsWith('Verification')
+                  color: message!.startsWith('Account created')
                       ? Colors.green
                       : Colors.red,
                 ),
@@ -67,15 +68,32 @@ class _RegisterScreenState extends ConsumerState<SignUpScreen> {
 
                       setState(() => loading = true);
                       try {
-                        await authService.signUp(
+                        // Sign up user
+                        User? user = await authService.signUp(
                           emailCtrl.text.trim(),
                           passwordCtrl.text.trim(),
                           nameCtrl.text.trim(),
                         );
-                        setState(
-                          () => message =
-                              'Verification email sent. Please check your inbox before logging in.',
-                        );
+
+                        if (user != null) {
+                          // Create Firestore profile (optional fields)
+                          await FirebaseFirestore.instance
+                              .collection('Users')
+                              .doc(user.uid)
+                              .set({
+                                'name': nameCtrl.text.trim(),
+                                'role': '',
+                                'location': '',
+                                'bio': '',
+                                'avatarUrl': '',
+                                'createdAt': FieldValue.serverTimestamp(),
+                              });
+
+                          setState(
+                            () => message =
+                                'Account created! Verification email sent. Please check your inbox.',
+                          );
+                        }
                       } on FirebaseAuthException catch (e) {
                         setState(() => message = e.message);
                       } finally {
@@ -89,7 +107,7 @@ class _RegisterScreenState extends ConsumerState<SignUpScreen> {
             const SizedBox(height: 16),
             TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/login'); // Go to login
+                Navigator.pushReplacementNamed(context, '/login');
               },
               child: const Text('Already have an account? Login'),
             ),
