@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "1071993420986",
     "project_id": "we-the-artists",
-    "storage_bucket": "we-the-artists.firebasestorage.app"
+    "storage_bucket": "we-the-artists.appspot.com"
   },
   "client": [
     {

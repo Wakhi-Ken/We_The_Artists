@@ -7,10 +7,17 @@ abstract class UserEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+/// Event to load a specific user's profile
 class LoadUserProfile extends UserEvent {
-  const LoadUserProfile();
+  final String userId; // Added userId field
+
+  const LoadUserProfile(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
 }
 
+/// Event to update the current user's profile
 class UpdateUserProfile extends UserEvent {
   final String name;
   final String role;
@@ -28,6 +35,7 @@ class UpdateUserProfile extends UserEvent {
   List<Object?> get props => [name, role, location, bio];
 }
 
+/// Event to follow/unfollow another user
 class ToggleFollow extends UserEvent {
   final String userId;
 

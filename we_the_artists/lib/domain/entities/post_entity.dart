@@ -9,6 +9,8 @@ class PostEntity extends Equatable {
   final String userAvatarUrl;
   final String content;
   final List<String> imageUrls;
+  final List<String> videoUrls; // added
+  final List<String> audioUrls; // added
   final List<String> tags;
   final int likes;
   final int comments;
@@ -24,8 +26,10 @@ class PostEntity extends Equatable {
     required this.userLocation,
     required this.userAvatarUrl,
     required this.content,
-    required this.imageUrls,
-    required this.tags,
+    this.imageUrls = const [],
+    this.videoUrls = const [],
+    this.audioUrls = const [],
+    this.tags = const [],
     required this.likes,
     required this.comments,
     required this.isLiked,
@@ -42,6 +46,8 @@ class PostEntity extends Equatable {
     String? userAvatarUrl,
     String? content,
     List<String>? imageUrls,
+    List<String>? videoUrls,
+    List<String>? audioUrls,
     List<String>? tags,
     int? likes,
     int? comments,
@@ -58,6 +64,8 @@ class PostEntity extends Equatable {
       userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
       content: content ?? this.content,
       imageUrls: imageUrls ?? this.imageUrls,
+      videoUrls: videoUrls ?? this.videoUrls,
+      audioUrls: audioUrls ?? this.audioUrls,
       tags: tags ?? this.tags,
       likes: likes ?? this.likes,
       comments: comments ?? this.comments,
@@ -69,19 +77,21 @@ class PostEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        userId,
-        userName,
-        userRole,
-        userLocation,
-        userAvatarUrl,
-        content,
-        imageUrls,
-        tags,
-        likes,
-        comments,
-        isLiked,
-        isSaved,
-        createdAt,
-      ];
+    id,
+    userId,
+    userName,
+    userRole,
+    userLocation,
+    userAvatarUrl,
+    content,
+    imageUrls,
+    videoUrls,
+    audioUrls,
+    tags,
+    likes,
+    comments,
+    isLiked,
+    isSaved,
+    createdAt,
+  ];
 }
