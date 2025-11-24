@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'screens/auth/sign_up_screen.dart';
 import 'screens/auth/log_in_screen.dart';
 import 'package:we_the_artists/presentation/screens/create_post_screen_v2.dart';
 import 'package:we_the_artists/presentation/screens/my_account_screen.dart';
+import 'package:we_the_artists/presentation/screens/Settings.dart';
 import 'screens/community_screen.dart';
 import 'screens/event_screen.dart';
 import 'screens/wellness_screen.dart';
@@ -76,6 +78,7 @@ class WeTheArtistsApp extends StatelessWidget {
               '/home': (_) => const HomeFeedScreen(),
               '/create_post': (_) => const CreatePostScreen(),
               '/my_account': (_) => const MyAccountScreen(),
+              '/settings': (_) => SettingsScreen(),
               '/community': (_) => const CommunityScreen(),
               '/wellness': (_) => WellnessScreen(),
             },

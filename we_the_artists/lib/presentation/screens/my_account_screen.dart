@@ -15,6 +15,7 @@ import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
 import 'edit_profile_screen_v2.dart';
 import 'recommendations_screen.dart';
+import 'package:we_the_artists/presentation/screens/Settings.dart';
 
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({super.key});
@@ -78,6 +79,13 @@ class _MyAccountScreenState extends State<MyAccountScreen>
               title: const Text('Settings'),
               onTap: () {
                 Navigator.pop(context);
+                // Navigate to SettingsScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
