@@ -1,13 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/post_entity.dart';
 import 'post_event.dart';
 import 'post_state.dart';
 
 class PostBloc extends Bloc<PostEvent, PostState> {
-  final List<PostEntity> initialPosts;
-
-  PostBloc({this.initialPosts = const []}) : super(const PostInitial()) {
+  PostBloc() : super(const PostInitial()) {
     on<LoadPosts>(_onLoadPosts);
     on<ToggleLike>(_onToggleLike);
     on<ToggleSave>(_onToggleSave);
@@ -15,12 +14,44 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<OpenComments>(_onOpenComments);
   }
 
-  // Load posts (from API or local DB)
+  // Load posts from Firestore
   Future<void> _onLoadPosts(LoadPosts event, Emitter<PostState> emit) async {
     emit(const PostLoading());
     try {
-      // Replace this with actual API call
-      final posts = initialPosts;
+      final snapshot = await FirebaseFirestore.instance
+          .collection('posts')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      final posts = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return PostEntity(
+          id: doc.id,
+          userId: data['userId'] ?? '',
+          userName: data['displayName'] ?? 'Unknown',
+          userRole: data['userRole'] ?? '',
+          userLocation: data['userLocation'] ?? '',
+          userAvatarUrl: data['avatarUrl'] ?? '',
+          content: data['content'] ?? '',
+          imageUrls: data['imageUrls'] != null
+              ? List<String>.from(data['imageUrls'])
+              : [],
+          videoUrls: data['videoUrls'] != null
+              ? List<String>.from(data['videoUrls'])
+              : [],
+          audioUrls: data['audioUrls'] != null
+              ? List<String>.from(data['audioUrls'])
+              : [],
+          tags: data['tags'] != null ? List<String>.from(data['tags']) : [],
+          likes: data['likes'] ?? 0,
+          comments: data['comments'] ?? 0,
+          isLiked: false,
+          isSaved: false,
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        );
+      }).toList();
+
       emit(PostLoaded(posts));
     } catch (e) {
       emit(PostError(e.toString()));
@@ -76,7 +107,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     }
   }
 
-  // Placeholder for comments, actual logic handled in CommentBloc
+  // Placeholder for comments, handled by CommentBloc
   Future<void> _onOpenComments(
     OpenComments event,
     Emitter<PostState> emit,

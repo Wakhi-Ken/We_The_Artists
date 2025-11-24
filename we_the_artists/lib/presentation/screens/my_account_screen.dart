@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../bloc/post_bloc.dart';
 import '../bloc/post_event.dart';
 import '../bloc/post_state.dart';
 import '../bloc/user_bloc.dart';
+import '../bloc/user_event.dart';
 import '../bloc/user_state.dart';
 import '../bloc/theme_bloc.dart';
 import '../bloc/theme_event.dart';
 import '../bloc/theme_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
-import 'package:we_the_artists/presentation/screens/edit_profile_screen_v2.dart';
+import 'edit_profile_screen_v2.dart';
 import 'recommendations_screen.dart';
 
 class MyAccountScreen extends StatefulWidget {
@@ -23,12 +26,21 @@ class MyAccountScreen extends StatefulWidget {
 class _MyAccountScreenState extends State<MyAccountScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late String currentUserId;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    final user = FirebaseAuth.instance.currentUser;
+    currentUserId = user?.uid ?? '';
+
+    // Load posts
     context.read<PostBloc>().add(const LoadPosts());
+
+    // Load user profile
+    context.read<UserBloc>().add(LoadUserProfile(currentUserId));
   }
 
   @override
@@ -146,8 +158,12 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                       );
                     },
                   );
+                } else if (state is UserLoading || state is UserInitial) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is UserError) {
+                  return Center(child: Text(state.message));
                 }
-                return const Center(child: CircularProgressIndicator());
+                return const SizedBox();
               },
             ),
           ),
@@ -178,7 +194,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                       return const Center(child: CircularProgressIndicator());
                     } else if (state is PostLoaded) {
                       final myPosts = state.posts
-                          .where((post) => post.userId == '1')
+                          .where((post) => post.userId == currentUserId)
                           .toList();
 
                       if (myPosts.isEmpty) {

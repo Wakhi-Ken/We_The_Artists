@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../bloc/post_bloc.dart';
+import '../bloc/post_event.dart';
+import '../bloc/post_state.dart';
+import '../bloc/notification_bloc.dart';
+import '../bloc/notification_event.dart';
+import '../bloc/notification_state.dart';
 import '../widgets/post_card.dart';
 import '../widgets/theme_switcher.dart';
 
 import 'notifications_screen.dart';
 import 'messages_screen.dart';
+import 'my_account_screen.dart';
 import 'package:we_the_artists/screens/community_screen.dart';
 import 'package:we_the_artists/screens/wellness_screen.dart';
-import 'my_account_screen.dart';
 import 'create_post_screen_v2.dart';
-
-import '../../domain/entities/post_entity.dart';
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
@@ -23,6 +27,7 @@ class HomeFeedScreen extends StatefulWidget {
 
 class _HomeFeedScreenState extends State<HomeFeedScreen> {
   int _currentIndex = 0;
+  late final String currentUserId;
 
   final List<Widget> _screens = [
     const HomeFeedContent(),
@@ -30,9 +35,15 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     WellnessScreen(),
   ];
 
-  void _onTabTapped(int index) {
-    setState(() => _currentIndex = index);
+  @override
+  void initState() {
+    super.initState();
+    currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    context.read<PostBloc>().add(const LoadPosts());
+    context.read<NotificationBloc>().add(const LoadNotifications());
   }
+
+  void _onTabTapped(int index) => setState(() => _currentIndex = index);
 
   @override
   Widget build(BuildContext context) {
@@ -52,17 +63,54 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
         actions: _currentIndex == 0
             ? [
                 const ThemeSwitcher(),
-                IconButton(
-                  icon: Icon(
-                    Icons.notifications_outlined,
-                    color: theme.iconTheme.color,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationsScreen(),
-                      ),
+                BlocBuilder<NotificationBloc, NotificationState>(
+                  builder: (context, state) {
+                    int unreadCount = 0;
+                    if (state is NotificationLoaded)
+                      unreadCount = state.unreadCount;
+
+                    return Stack(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.notifications_outlined,
+                            color: theme.iconTheme.color,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificationsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
                     );
                   },
                 ),
@@ -196,81 +244,44 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
 }
 
 /// -----------------
-/// Feed Content
+/// Feed Content (Bloc version)
 /// -----------------
 class HomeFeedContent extends StatelessWidget {
   const HomeFeedContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('Posts')
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return BlocBuilder<PostBloc, PostState>(
+      builder: (context, state) {
+        if (state is PostLoading) {
           return const Center(child: CircularProgressIndicator());
+        } else if (state is PostLoaded) {
+          if (state.posts.isEmpty) {
+            return const Center(child: Text('No posts yet'));
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async =>
+                context.read<PostBloc>().add(const LoadPosts()),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: state.posts.length,
+              itemBuilder: (context, index) {
+                final post = state.posts[index];
+                return PostCard(
+                  post: post,
+                  isOwnPost: post.userId == currentUserId,
+                );
+              },
+            ),
+          );
+        } else if (state is PostError) {
+          return Center(child: Text('Error: ${state.message}'));
         }
 
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No posts yet'));
-        }
-
-        final posts = snapshot.data!.docs;
-
-        return RefreshIndicator(
-          onRefresh: () async {},
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final postDoc = posts[index];
-              final postData = postDoc.data()! as Map<String, dynamic>;
-
-              // Extract media safely
-              final List<String> imageUrls = postData['imageUrls'] != null
-                  ? List<String>.from(postData['imageUrls'])
-                  : [];
-              final List<String> videoUrls = postData['videoUrls'] != null
-                  ? List<String>.from(postData['videoUrls'])
-                  : [];
-              final List<String> audioUrls = postData['audioUrls'] != null
-                  ? List<String>.from(postData['audioUrls'])
-                  : [];
-
-              final post = PostEntity(
-                id: postDoc.id,
-                userId: postData['userId'] ?? '',
-                userName: postData['displayName'] ?? 'Unknown',
-                userRole: postData['userRole'] ?? '',
-                userLocation: postData['userLocation'] ?? '',
-                userAvatarUrl: postData['userAvatarUrl'] ?? '',
-                content: postData['content'] ?? '',
-                tags: List<String>.from(postData['tags'] ?? []),
-                imageUrls: imageUrls,
-                videoUrls: videoUrls,
-                audioUrls: audioUrls,
-                likes: postData['likes'] ?? 0,
-                isLiked: postData['isLiked'] ?? false,
-                isSaved: postData['isSaved'] ?? false,
-                createdAt: postData['createdAt'] != null
-                    ? (postData['createdAt'] as Timestamp).toDate()
-                    : DateTime.now(),
-                comments: postData['comments'] != null
-                    ? (postData['comments'] as List).length
-                    : 0,
-              );
-
-              return PostCard(
-                post: post,
-                isOwnPost: post.userId == currentUserId,
-              );
-            },
-          ),
-        );
+        return const Center(child: Text('No posts yet'));
       },
     );
   }

@@ -20,6 +20,7 @@ import 'package:we_the_artists/presentation/bloc/notification_bloc.dart';
 import 'package:we_the_artists/presentation/bloc/theme_bloc.dart';
 import 'package:we_the_artists/presentation/bloc/theme_state.dart';
 import 'package:we_the_artists/presentation/bloc/theme_event.dart';
+import 'package:we_the_artists/presentation/bloc/user_bloc.dart'; // <-- added
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +54,7 @@ class WeTheArtistsApp extends StatelessWidget {
         BlocProvider<PostBloc>(create: (_) => PostBloc()),
         BlocProvider<NotificationBloc>(create: (_) => NotificationBloc()),
         BlocProvider<ThemeBloc>(create: (_) => ThemeBloc()..add(LoadTheme())),
+        BlocProvider<UserBloc>(create: (_) => UserBloc()), // <-- added
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
