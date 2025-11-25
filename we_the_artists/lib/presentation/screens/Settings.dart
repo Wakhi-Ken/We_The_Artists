@@ -21,8 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _selectedLanguage =
-          prefs.getString('language') ?? 'en'; // Default to 'en'
+      _selectedLanguage = prefs.getString('language') ?? 'en';
     });
   }
 
@@ -44,14 +43,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text("Settings"),
         backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // You can navigate to settings screen
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -63,33 +54,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _selectedLanguage == 'en' ? 'English' : 'Other Language',
                 style: TextStyle(color: theme.textTheme.bodyMedium?.color),
               ),
-              onTap: () async {
+              onTap: () {
                 // Toggle between English and another language
                 String newLanguage = _selectedLanguage == 'en' ? 'es' : 'en';
                 _saveLanguagePreference(newLanguage);
-
-                // Optionally update your app language here
-                // For example, using the `Locale` class with your `MaterialApp` settings
               },
             ),
           ),
           const Divider(),
-          Container(
-            color: theme.cardColor,
-            child: ListTile(
-              leading: const Icon(Icons.notifications),
-              title: const Text('Notifications'),
-              onTap: () {
-                // Navigate to Notifications Screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationsScreen(),
-                  ),
-                );
-              },
-            ),
-          ),
           Container(
             color: theme.cardColor,
             child: ListTile(
@@ -109,18 +81,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Notifications")),
-      body: const Center(child: Text('Here are your notifications!')),
     );
   }
 }
