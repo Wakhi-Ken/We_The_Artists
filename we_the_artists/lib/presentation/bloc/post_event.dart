@@ -46,3 +46,13 @@ class OpenComments extends PostEvent {
   @override
   List<Object?> get props => [postId];
 }
+
+// Added for Delete Feature
+class DeletePostEvent extends PostEvent {
+  final String postId;
+
+  const DeletePostEvent(this.postId);
+
+  @override
+  List<Object?> get props => [postId];
+}
