@@ -3,22 +3,24 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../bloc/post_bloc.dart';
-import '../bloc/post_event.dart';
-import '../bloc/post_state.dart';
-import '../bloc/notification_bloc.dart';
-import '../bloc/notification_event.dart';
-import '../bloc/notification_state.dart';
+import '../presentation/bloc/post_bloc.dart';
+import '../presentation/bloc/post_event.dart';
+import '../presentation/bloc/post_state.dart';
+import '../presentation/bloc/notification_bloc.dart';
+import '../presentation/bloc/notification_event.dart';
+import '../presentation/bloc/notification_state.dart';
+import '../presentation/bloc/comment_bloc.dart';
+
 import '../widgets/post_card.dart';
 import '../widgets/theme_switcher.dart';
-import 'package:we_the_artists/presentation/bloc/comment_bloc.dart';
 
 import 'notifications_screen.dart';
 import 'messages_screen.dart';
 import 'my_account_screen.dart';
-import 'package:we_the_artists/screens/community_screen.dart';
-import 'package:we_the_artists/screens/wellness_screen.dart';
-import 'create_post_screen_v2.dart';
+import 'community_screen.dart';
+import 'wellness_screen.dart';
+// FIXED: Updated import name (removed _v2)
+import 'create_post_screen.dart'; 
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
@@ -41,6 +43,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
   void initState() {
     super.initState();
     currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    // Load posts when app starts
     context.read<PostBloc>().add(const LoadPosts());
     context.read<NotificationBloc>().add(const LoadNotifications());
   }
@@ -52,7 +55,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     final theme = Theme.of(context);
 
     return BlocProvider<CommentBloc>(
-      // Providing CommentBloc here
       create: (_) => CommentBloc(),
       child: Scaffold(
         appBar: AppBar(
@@ -60,8 +62,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             _currentIndex == 0
                 ? 'Artist Feed'
                 : _currentIndex == 1
-                ? 'Community'
-                : 'Wellness',
+                    ? 'Community'
+                    : 'Wellness',
           ),
           backgroundColor: theme.appBarTheme.backgroundColor,
           elevation: 0,
@@ -69,7 +71,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
               ? [
                   const ThemeSwitcher(),
 
-                  // 🔔 Notifications with unread badge
+                  // 🔔 Notifications
                   BlocBuilder<NotificationBloc, NotificationState>(
                     builder: (context, state) {
                       int unreadCount = 0;
@@ -136,7 +138,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 ]
               : null,
         ),
-        // Your Drawer and Bottom NavigationBar code here
+        
+        // DRAWER LOGIC
         drawer: Drawer(
           child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             future: FirebaseFirestore.instance
@@ -149,11 +152,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
               }
 
               final userData = snapshot.data!.data() ?? {};
-
               final name = userData['name'] ?? 'User';
               final role = userData['role'] ?? '';
-              final avatar =
-                  userData['avatarUrl'] ??
+              final avatar = userData['avatarUrl'] ??
                   'https://ui-avatars.com/api/?name=$name';
 
               return ListView(
@@ -211,7 +212,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                     title: const Text('Events'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, '/event');
+                      // Ensure /event route exists in main.dart or use MaterialPageRoute
+                      Navigator.pushNamed(context, '/event'); 
                     },
                   ),
                   ListTile(
@@ -221,7 +223,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                       await FirebaseAuth.instance.signOut();
                       Navigator.pushNamedAndRemoveUntil(
                         context,
-                        '/signup',
+                        '/login', // Changed to /login or /signup depending on your routes
                         (route) => false,
                       );
                     },
@@ -231,7 +233,9 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             },
           ),
         ),
+        
         body: _screens[_currentIndex],
+        
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: _onTabTapped,
@@ -247,6 +251,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
             ),
           ],
         ),
+        
         floatingActionButton: _currentIndex == 0
             ? FloatingActionButton(
                 backgroundColor: Colors.blue,
@@ -254,7 +259,8 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const CreatePostScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const CreatePostScreen()),
                   );
                 },
               )
@@ -272,7 +278,6 @@ class HomeFeedContent extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return BlocBuilder<PostBloc, PostState>(
-      // Home feed content builder
       builder: (context, state) {
         if (state is PostLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -292,7 +297,8 @@ class HomeFeedContent extends StatelessWidget {
                 final post = state.posts[index];
                 return PostCard(
                   post: post,
-                  isOwnPost: post.userId == currentUserId,
+                  // This is passed to PostCard to help with other logic
+                  isOwnPost: post.userId == currentUserId, 
                 );
               },
             ),
