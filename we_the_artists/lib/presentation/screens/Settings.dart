@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:we_the_artists/presentation/widgets/theme_switcher.dart'; // Assuming theme switcher is used for dark/light mode
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

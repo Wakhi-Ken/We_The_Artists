@@ -6,7 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  const CreatePostScreen({Key? key}) : super(key: key);
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -36,12 +36,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<void> _pickVideo() async {
     final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) setState(() => _selectedVideos.add(video));
+    if (video != null) {
+      setState(() => _selectedVideos.add(video));
+    }
   }
 
   Future<void> _takePhoto() async {
     final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
-    if (photo != null) setState(() => _selectedImages.add(photo));
+    if (photo != null) {
+      setState(() => _selectedImages.add(photo));
+    }
   }
 
   void _removeMedia(int index, String type) {
@@ -69,7 +73,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   Future<List<String>> _uploadFiles(List<XFile> files, String folder) async {
     List<String> urls = [];
-    final currentUser = FirebaseAuth.instance.currentUser!;
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      throw Exception('User not found.');
+    }
 
     for (var file in files) {
       try {
@@ -95,7 +103,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _savePost() async {
-    final currentUser = FirebaseAuth.instance.currentUser!;
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      throw Exception('User not found.');
+    }
 
     if (_selectedImages.isEmpty &&
         _selectedVideos.isEmpty &&
@@ -261,6 +273,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     for (int i = 0; i < _selectedImages.length; i++) {
       previews.add(_mediaTile(_selectedImages[i].path, i, 'image'));
     }
+
     for (int i = 0; i < _selectedVideos.length; i++) {
       previews.add(_mediaTile(_selectedVideos[i].path, i, 'video'));
     }

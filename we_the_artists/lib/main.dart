@@ -10,7 +10,6 @@ import 'screens/auth/sign_up_screen.dart';
 import 'screens/auth/log_in_screen.dart';
 import 'package:we_the_artists/presentation/screens/create_post_screen_v2.dart';
 import 'package:we_the_artists/presentation/screens/my_account_screen.dart';
-import 'package:we_the_artists/presentation/screens/Settings.dart';
 import 'screens/community_screen.dart';
 import 'screens/event_screen.dart';
 import 'screens/wellness_screen.dart';

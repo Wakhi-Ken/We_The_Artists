@@ -1,14 +1,11 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../domain/entities/post_entity.dart';
 import 'package:we_the_artists/presentation/bloc/post_bloc.dart';
 import 'package:we_the_artists/presentation/bloc/post_event.dart';
-import '../bloc/comment_bloc.dart';
-import '../bloc/comment_state.dart';
-import '../bloc/comment_event.dart';
 import '../screens/artist_profile_screen.dart';
 import '../utils/avatar_gradients.dart';
 import '../utils/mention_text_helper.dart';
@@ -19,7 +16,8 @@ class PostCard extends StatefulWidget {
   final PostEntity post;
   final bool isOwnPost;
 
-  const PostCard({super.key, required this.post, this.isOwnPost = false});
+  const PostCard({Key? key, required this.post, this.isOwnPost = false})
+    : super(key: key);
 
   @override
   State<PostCard> createState() => _PostCardState();
@@ -30,10 +28,13 @@ class _PostCardState extends State<PostCard>
   late AnimationController _likeAnimationController;
   late Animation<double> _likeAnimation;
   bool _showLikeAnimation = false;
-  int _currentMediaIndex = 0;
   late PageController _pageController;
   final Map<String, VideoPlayerController> _videoControllers = {};
   final Map<String, AudioPlayer> _audioPlayers = {};
+
+  // Temporary comments
+  List<String> _comments = [];
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
@@ -51,26 +52,6 @@ class _PostCardState extends State<PostCard>
         curve: Curves.elasticOut,
       ),
     );
-    _likeAnimationController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        setState(() => _showLikeAnimation = false);
-        _likeAnimationController.reset();
-      }
-    });
-
-    // Init videos
-    for (var url in widget.post.videoUrls) {
-      final controller = VideoPlayerController.network(url)
-        ..initialize().then((_) => setState(() {}));
-      _videoControllers[url] = controller;
-    }
-
-    // Init audios
-    for (var url in widget.post.audioUrls) {
-      final player = AudioPlayer();
-      player.setUrl(url);
-      _audioPlayers[url] = player;
-    }
   }
 
   @override
@@ -83,6 +64,7 @@ class _PostCardState extends State<PostCard>
     for (var player in _audioPlayers.values) {
       player.dispose();
     }
+    _commentController.dispose(); // Dispose of the comment controller
     super.dispose();
   }
 
@@ -94,187 +76,78 @@ class _PostCardState extends State<PostCard>
     _likeAnimationController.forward();
   }
 
-  void _showCommentsSheet(BuildContext context) {
-    context.read<CommentBloc>().add(LoadComments(widget.post.id));
-    final commentController = TextEditingController();
-
+  void _showCommentsDialog() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-                ),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Comments',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(sheetContext),
-                    ),
-                  ],
-                ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              // Comment List
-              Expanded(
-                child: BlocProvider.value(
-                  value: context
-                      .read<CommentBloc>(), // Provide CommentBloc here
-                  child: BlocBuilder<CommentBloc, CommentState>(
-                    builder: (context, state) {
-                      if (state is CommentLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is CommentLoaded) {
-                        if (state.comments.isEmpty) {
-                          return const Center(
-                            child: Text(
-                              'No comments yet. Be the first!',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          );
-                        }
-                        return ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.all(16),
-                          itemCount: state.comments.length,
-                          itemBuilder: (context, index) {
-                            final comment = state.comments[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Colors.blue, Colors.purple],
-                                      ),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        comment.userName
-                                            .split(' ')
-                                            .map((n) => n[0])
-                                            .take(2)
-                                            .join()
-                                            .toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          comment.userName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          comment.content,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      return const SizedBox();
-                    },
+              child: Column(
+                children: [
+                  const Text(
+                    'Comments',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ),
-              // Input
-              Container(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                  top: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: Colors.grey[200]!)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: commentController,
-                        decoration: InputDecoration(
-                          hintText: 'Add a comment...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scrollController,
+                      itemCount: _comments.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(_comments[index]),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              setState(() {
+                                _comments.removeAt(index);
+                              });
+                            },
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                        ),
+                        );
+                      },
+                    ),
+                  ),
+                  TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: 'Add a comment...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () {
-                        if (commentController.text.trim().isNotEmpty) {
-                          context.read<CommentBloc>().add(
-                            AddComment(
-                              postId: widget.post.id,
-                              content: commentController.text.trim(),
-                            ),
-                          );
-                          commentController.clear();
-                        }
-                      },
-                      icon: const Icon(Icons.send, color: Colors.blue),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_commentController.text.trim().isNotEmpty) {
+                        setState(() {
+                          _comments.add(_commentController.text.trim());
+                          _commentController.clear();
+                        });
+                      }
+                    },
+                    child: const Text('Add Comment'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -295,27 +168,27 @@ class _PostCardState extends State<PostCard>
             Row(
               children: [
                 GestureDetector(
-                  onTap: widget.isOwnPost
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ArtistProfileScreen(
-                                userId: widget.post.userId,
-                                userName: widget.post.userName,
-                                userRole: widget.post.userRole,
-                                userLocation: widget.post.userLocation,
-                                avatarInitials: widget.post.userName
-                                    .split(' ')
-                                    .map((n) => n[0])
-                                    .take(2)
-                                    .join()
-                                    .toUpperCase(),
-                              ),
-                            ),
-                          );
-                        },
+                  onTap: () {
+                    if (!widget.isOwnPost) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ArtistProfileScreen(
+                            userId: widget.post.userId,
+                            userName: widget.post.userName,
+                            userRole: widget.post.userRole,
+                            userLocation: widget.post.userLocation,
+                            avatarInitials: widget.post.userName
+                                .split(' ')
+                                .map((n) => n[0])
+                                .take(2)
+                                .join()
+                                .toUpperCase(),
+                          ),
+                        ),
+                      );
+                    }
+                  },
                   child: AnimatedGradientAvatar(
                     initials: widget.post.userName
                         .split(' ')
@@ -390,9 +263,7 @@ class _PostCardState extends State<PostCard>
                       widget.post.imageUrls.length +
                       widget.post.videoUrls.length +
                       widget.post.audioUrls.length,
-                  onPageChanged: (index) => setState(() {
-                    _currentMediaIndex = index;
-                  }),
+                  onPageChanged: (index) {},
                   itemBuilder: (context, index) {
                     if (index < widget.post.imageUrls.length) {
                       final url = widget.post.imageUrls[index];
@@ -420,62 +291,12 @@ class _PostCardState extends State<PostCard>
                               onDoubleTap: _handleDoubleTap,
                               child: AspectRatio(
                                 aspectRatio: controller.value.aspectRatio,
-                                child: Stack(
-                                  children: [
-                                    VideoPlayer(controller),
-                                    Center(
-                                      child: IconButton(
-                                        icon: Icon(
-                                          controller.value.isPlaying
-                                              ? Icons.pause_circle
-                                              : Icons.play_circle,
-                                          size: 64,
-                                          color: Colors.white,
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            controller.value.isPlaying
-                                                ? controller.pause()
-                                                : controller.play();
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                child: VideoPlayer(controller),
                               ),
                             )
                           : const Center(child: CircularProgressIndicator());
-                    } else {
-                      final audIndex =
-                          index -
-                          widget.post.imageUrls.length -
-                          widget.post.videoUrls.length;
-                      final url = widget.post.audioUrls[audIndex];
-                      final player = _audioPlayers[url]!;
-
-                      return Card(
-                        color: Colors.grey[200],
-                        margin: const EdgeInsets.all(24),
-                        child: ListTile(
-                          leading: const Icon(Icons.audiotrack, size: 40),
-                          title: Text(url.split('/').last),
-                          trailing: IconButton(
-                            icon: Icon(
-                              player.playing ? Icons.pause : Icons.play_arrow,
-                            ),
-                            onPressed: () {
-                              if (player.playing) {
-                                player.pause();
-                              } else {
-                                player.play();
-                              }
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      );
                     }
+                    return const SizedBox();
                   },
                 ),
               ),
@@ -487,9 +308,20 @@ class _PostCardState extends State<PostCard>
                   TimeHelper.getRelativeTime(widget.post.createdAt),
                   style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
-                const SizedBox(width: 8),
-                const Text('•', style: TextStyle(color: Colors.grey)),
-                const SizedBox(width: 8),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    _showCommentsDialog(); // Show comments when icon is tapped
+                  },
+                  child: Row(
+                    children: const [
+                      Icon(Icons.comment_outlined, size: 20),
+                      SizedBox(width: 4),
+                      Text('0'), // Placeholder for comment count
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () =>
                       context.read<PostBloc>().add(ToggleLike(widget.post.id)),
@@ -509,32 +341,13 @@ class _PostCardState extends State<PostCard>
                 ),
                 const SizedBox(width: 16),
                 GestureDetector(
-                  onTap: () => _showCommentsSheet(context),
-                  child: BlocBuilder<CommentBloc, CommentState>(
-                    builder: (context, state) {
-                      int commentCount = 0;
-                      if (state is CommentLoaded) {
-                        commentCount = state.comments
-                            .where((c) => c.postId == widget.post.id)
-                            .length;
-                      }
-                      return Row(
-                        children: [
-                          const Icon(Icons.comment_outlined, size: 20),
-                          const SizedBox(width: 4),
-                          Text('$commentCount'),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                GestureDetector(
-                  onTap: () =>
-                      context.read<PostBloc>().add(SharePost(widget.post.id)),
+                  onTap: () {
+                    // Implement share functionality here
+                    context.read<PostBloc>().add(SharePost(widget.post.id));
+                  },
                   child: const Icon(Icons.share_outlined, size: 20),
                 ),
-                const Spacer(),
+                const SizedBox(width: 16),
                 GestureDetector(
                   onTap: () =>
                       context.read<PostBloc>().add(ToggleSave(widget.post.id)),

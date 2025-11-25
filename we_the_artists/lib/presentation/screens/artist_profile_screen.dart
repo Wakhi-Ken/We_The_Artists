@@ -76,10 +76,7 @@ class ArtistProfileScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     itemCount: userPosts.length,
                     itemBuilder: (context, index) {
-                      return PostCard(
-                        post: userPosts[index],
-                        isOwnPost: false,
-                      );
+                      return PostCard(post: userPosts[index], isOwnPost: false);
                     },
                   );
                 }
