@@ -32,7 +32,6 @@ class _PostCardState extends State<PostCard>
   final Map<String, VideoPlayerController> _videoControllers = {};
   final Map<String, AudioPlayer> _audioPlayers = {};
 
-  // Temporary comments
   List<String> _comments = [];
   final TextEditingController _commentController = TextEditingController();
 
@@ -41,7 +40,6 @@ class _PostCardState extends State<PostCard>
     super.initState();
     _pageController = PageController();
 
-    // Like animation
     _likeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -58,13 +56,9 @@ class _PostCardState extends State<PostCard>
   void dispose() {
     _pageController.dispose();
     _likeAnimationController.dispose();
-    for (var controller in _videoControllers.values) {
-      controller.dispose();
-    }
-    for (var player in _audioPlayers.values) {
-      player.dispose();
-    }
-    _commentController.dispose(); // Dispose of the comment controller
+    for (var controller in _videoControllers.values) controller.dispose();
+    for (var player in _audioPlayers.values) player.dispose();
+    _commentController.dispose();
     super.dispose();
   }
 
@@ -109,9 +103,7 @@ class _PostCardState extends State<PostCard>
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
                             onPressed: () {
-                              setState(() {
-                                _comments.removeAt(index);
-                              });
+                              setState(() => _comments.removeAt(index));
                             },
                           ),
                         );
@@ -164,7 +156,7 @@ class _PostCardState extends State<PostCard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User info
+            // User info + delete option
             Row(
               children: [
                 GestureDetector(
@@ -219,6 +211,22 @@ class _PostCardState extends State<PostCard>
                     ],
                   ),
                 ),
+                if (widget.isOwnPost)
+                  PopupMenuButton(
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        context.read<PostBloc>().add(
+                          DeletePostEvent(widget.post.id),
+                        );
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete Post'),
+                      ),
+                    ],
+                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -251,7 +259,7 @@ class _PostCardState extends State<PostCard>
                     .toList(),
               ),
             const SizedBox(height: 12),
-            // Media PageView
+            // Media
             if (widget.post.imageUrls.isNotEmpty ||
                 widget.post.videoUrls.isNotEmpty ||
                 widget.post.audioUrls.isNotEmpty)
@@ -285,7 +293,6 @@ class _PostCardState extends State<PostCard>
                       final vidIndex = index - widget.post.imageUrls.length;
                       final url = widget.post.videoUrls[vidIndex];
                       final controller = _videoControllers[url]!;
-
                       return controller.value.isInitialized
                           ? GestureDetector(
                               onDoubleTap: _handleDoubleTap,
@@ -301,7 +308,7 @@ class _PostCardState extends State<PostCard>
                 ),
               ),
             const SizedBox(height: 12),
-            // Actions: Likes, Comments, Share, Save
+            // Actions: likes, comments, share, save
             Row(
               children: [
                 Text(
@@ -310,14 +317,12 @@ class _PostCardState extends State<PostCard>
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {
-                    _showCommentsDialog(); // Show comments when icon is tapped
-                  },
+                  onTap: _showCommentsDialog,
                   child: Row(
                     children: const [
                       Icon(Icons.comment_outlined, size: 20),
                       SizedBox(width: 4),
-                      Text('0'), // Placeholder for comment count
+                      Text('0'),
                     ],
                   ),
                 ),
@@ -341,10 +346,8 @@ class _PostCardState extends State<PostCard>
                 ),
                 const SizedBox(width: 16),
                 GestureDetector(
-                  onTap: () {
-                    // Implement share functionality here
-                    context.read<PostBloc>().add(SharePost(widget.post.id));
-                  },
+                  onTap: () =>
+                      context.read<PostBloc>().add(SharePost(widget.post.id)),
                   child: const Icon(Icons.share_outlined, size: 20),
                 ),
                 const SizedBox(width: 16),

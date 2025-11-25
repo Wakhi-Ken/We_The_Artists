@@ -18,7 +18,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(const UserLoading());
     try {
       final doc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('Users')
           .doc(event.userId)
           .get();
 
@@ -65,7 +65,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
       // Update Firestore
       await FirebaseFirestore.instance
-          .collection('users')
+          .collection('Users')
           .doc(updatedUser.id)
           .update({
             'name': event.name,
@@ -101,7 +101,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
       // Update Firestore
       await FirebaseFirestore.instance
-          .collection('users')
+          .collection('Users')
           .doc(updatedUser.id)
           .update({'following': following});
     }

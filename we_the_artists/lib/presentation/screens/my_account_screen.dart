@@ -13,7 +13,7 @@ import '../bloc/theme_event.dart';
 import '../bloc/theme_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
-import 'edit_profile_screen_v2.dart';
+import 'package:we_the_artists/presentation/screens/edit_profile_screen.dart';
 import 'recommendations_screen.dart';
 import 'package:we_the_artists/presentation/screens/Settings.dart';
 

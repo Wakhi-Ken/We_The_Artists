@@ -6,7 +6,7 @@ class ProfileHeader extends StatelessWidget {
   final String name;
   final String role;
   final String location;
-  final String? bio; // Make bio nullable
+  final String? bio; // nullable
   final String avatarInitials;
   final VoidCallback? onEditProfile;
 
@@ -16,15 +16,13 @@ class ProfileHeader extends StatelessWidget {
     required this.role,
     required this.location,
     required this.avatarInitials,
-    this.bio, // Make bio nullable
+    this.bio,
     this.onEditProfile,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final colors = AvatarGradients.getGradientForUser(
-      '1',
-    ); // Ideally use a dynamic identifier
+    final colors = AvatarGradients.getGradientForUser(avatarInitials);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -72,12 +70,12 @@ class ProfileHeader extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '$role · $location',
+            '$role · ${location.isNotEmpty ? location : 'Unknown location'}',
             style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 12),
           Text(
-            bio ?? 'No bio available', // Provide fallback for bio
+            bio?.isNotEmpty == true ? bio! : 'No bio available',
             style: TextStyle(fontSize: 14, color: Colors.grey[700]),
           ),
         ],

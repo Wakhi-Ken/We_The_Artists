@@ -17,6 +17,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _locationController = TextEditingController();
   final _bioController = TextEditingController();
 
+  String avatarInitials = '';
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +28,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _roleController.text = userState.user.role;
       _locationController.text = userState.user.location;
       _bioController.text = userState.user.bio;
+
+      // Generate initials from user's name
+      avatarInitials = _generateInitials(userState.user.name);
     }
   }
 
@@ -40,14 +45,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _saveProfile() {
     context.read<UserBloc>().add(
-          UpdateUserProfile(
-            name: _nameController.text,
-            role: _roleController.text,
-            location: _locationController.text,
-            bio: _bioController.text,
-          ),
-        );
-    
+      UpdateUserProfile(
+        name: _nameController.text,
+        role: _roleController.text,
+        location: _locationController.text,
+        bio: _bioController.text,
+      ),
+    );
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Profile updated successfully'),
@@ -55,24 +60,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         duration: Duration(seconds: 2),
       ),
     );
+
     Navigator.pop(context);
+  }
+
+  String _generateInitials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: Icon(Icons.close, color: theme.iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Edit Profile',
           style: TextStyle(
-            color: Colors.black,
+            color: theme.textTheme.titleLarge?.color ?? Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -99,25 +115,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Center(
               child: Stack(
                 children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Colors.blue, Colors.purple],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'AM',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      avatarInitials,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -145,18 +151,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               controller: _nameController,
               label: 'Name',
               icon: Icons.person_outline,
+              theme: theme,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _roleController,
               label: 'Role',
               icon: Icons.work_outline,
+              theme: theme,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _locationController,
               label: 'Location',
               icon: Icons.location_on_outlined,
+              theme: theme,
             ),
             const SizedBox(height: 16),
             _buildTextField(
@@ -164,6 +173,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               label: 'Bio',
               icon: Icons.description_outlined,
               maxLines: 3,
+              theme: theme,
             ),
           ],
         ),
@@ -176,20 +186,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required String label,
     required IconData icon,
     int maxLines = 1,
+    required ThemeData theme,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: Colors.grey),
+        labelStyle: TextStyle(
+          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+        ),
+        prefixIcon: Icon(icon, color: theme.iconTheme.color),
+        filled: true,
+        fillColor: theme.cardColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: theme.dividerColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: theme.dividerColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
