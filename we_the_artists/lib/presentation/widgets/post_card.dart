@@ -83,8 +83,10 @@ class _PostCardState extends State<PostCard>
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
               ),
               child: Column(
                 children: [
@@ -161,25 +163,13 @@ class _PostCardState extends State<PostCard>
               children: [
                 GestureDetector(
                   onTap: () {
-                    if (!widget.isOwnPost) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ArtistProfileScreen(
-                            userId: widget.post.userId,
-                            userName: widget.post.userName,
-                            userRole: widget.post.userRole,
-                            userLocation: widget.post.userLocation,
-                            avatarInitials: widget.post.userName
-                                .split(' ')
-                                .map((n) => n[0])
-                                .take(2)
-                                .join()
-                                .toUpperCase(),
-                          ),
-                        ),
-                      );
-                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            ArtistProfileScreen(userId: widget.post.userId),
+                      ),
+                    );
                   },
                   child: AnimatedGradientAvatar(
                     initials: widget.post.userName
@@ -194,21 +184,37 @@ class _PostCardState extends State<PostCard>
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.post.userName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ArtistProfileScreen(userId: widget.post.userId),
                         ),
-                      ),
-                      Text(
-                        '${widget.post.userRole} · ${widget.post.userLocation}',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                      ),
-                    ],
+                      );
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.post.userName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textTheme.bodyLarge?.color,
+                          ),
+                        ),
+                        Text(
+                          '${widget.post.userRole} · ${widget.post.userLocation}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: theme.textTheme.bodyMedium?.color
+                                ?.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 if (widget.isOwnPost)
@@ -249,9 +255,9 @@ class _PostCardState extends State<PostCard>
                     .map(
                       (tag) => Chip(
                         label: Text('#$tag'),
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: theme.dividerColor.withOpacity(0.2),
                         labelStyle: TextStyle(
-                          color: Colors.grey[700],
+                          color: theme.textTheme.bodyMedium?.color,
                           fontSize: 12,
                         ),
                       ),
@@ -259,7 +265,7 @@ class _PostCardState extends State<PostCard>
                     .toList(),
               ),
             const SizedBox(height: 12),
-            // Media
+            // Media PageView
             if (widget.post.imageUrls.isNotEmpty ||
                 widget.post.videoUrls.isNotEmpty ||
                 widget.post.audioUrls.isNotEmpty)
@@ -271,7 +277,6 @@ class _PostCardState extends State<PostCard>
                       widget.post.imageUrls.length +
                       widget.post.videoUrls.length +
                       widget.post.audioUrls.length,
-                  onPageChanged: (index) {},
                   itemBuilder: (context, index) {
                     if (index < widget.post.imageUrls.length) {
                       final url = widget.post.imageUrls[index];
@@ -308,12 +313,15 @@ class _PostCardState extends State<PostCard>
                 ),
               ),
             const SizedBox(height: 12),
-            // Actions: likes, comments, share, save
+            // Actions
             Row(
               children: [
                 Text(
                   TimeHelper.getRelativeTime(widget.post.createdAt),
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  ),
                 ),
                 const Spacer(),
                 GestureDetector(
@@ -348,7 +356,11 @@ class _PostCardState extends State<PostCard>
                 GestureDetector(
                   onTap: () =>
                       context.read<PostBloc>().add(SharePost(widget.post.id)),
-                  child: const Icon(Icons.share_outlined, size: 20),
+                  child: Icon(
+                    Icons.share_outlined,
+                    size: 20,
+                    color: theme.iconTheme.color,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 GestureDetector(
@@ -358,7 +370,9 @@ class _PostCardState extends State<PostCard>
                     widget.post.isSaved
                         ? Icons.bookmark
                         : Icons.bookmark_border,
-                    color: widget.post.isSaved ? Colors.blue : null,
+                    color: widget.post.isSaved
+                        ? Colors.blue
+                        : theme.iconTheme.color,
                     size: 20,
                   ),
                 ),
