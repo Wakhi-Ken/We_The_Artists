@@ -20,7 +20,6 @@ import 'package:we_the_artists/screens/community_screen.dart';
 import 'package:we_the_artists/screens/wellness_screen.dart';
 import 'create_post_screen_v2.dart';
 import 'package:we_the_artists/presentation/screens/Settings.dart';
-import 'package:we_the_artists/presentation/screens/notifications_screen.dart';
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
@@ -219,12 +218,7 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                     title: const Text('Events'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CommunityScreen(),
-                        ),
-                      );
+                      Navigator.pushNamed(context, '/event'); // reverted
                     },
                   ),
                   ListTile(
