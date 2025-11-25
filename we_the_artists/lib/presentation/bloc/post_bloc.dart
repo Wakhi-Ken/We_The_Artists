@@ -2,11 +2,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/post_entity.dart';
+// Ensure this import path matches where you moved the service
+import '../../data/services/post_service.dart'; 
 import 'post_event.dart';
 import 'post_state.dart';
 
 class PostBloc extends Bloc<PostEvent, PostState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Initialize the service you created in the Data layer
+  final PostService _postService = PostService();
 
   PostBloc() : super(const PostInitial()) {
     on<LoadPosts>(_onLoadPosts);
@@ -14,18 +18,20 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     on<ToggleSave>(_onToggleSave);
     on<SharePost>(_onSharePost);
     on<OpenComments>(_onOpenComments);
+    // Register the Delete Handler
+    on<DeletePostEvent>(_onDeletePost);
   }
 
-  // Load posts from Firestore with real-time updates
+  // Load posts from Firestore
   Future<void> _onLoadPosts(LoadPosts event, Emitter<PostState> emit) async {
     emit(const PostLoading());
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('Posts')
+          .collection('Posts') // Ensure this matches your Firestore collection name (case sensitive)
           .orderBy('createdAt', descending: true)
           .get();
 
-      print("Posts fetched successfully"); // Debugging line
+      print("Posts fetched successfully");
 
       final posts = snapshot.docs.map((doc) {
         final data = doc.data();
@@ -56,12 +62,26 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         );
       }).toList();
 
-      print("Posts loaded: ${posts.length}"); // Debugging line
+      print("Posts loaded: ${posts.length}");
 
-      emit(PostLoaded(posts)); // Emitting PostLoaded state
+      emit(PostLoaded(posts)); 
     } catch (e) {
-      print('Error loading posts: $e'); // Debugging line
+      print('Error loading posts: $e'); 
       emit(PostError(e.toString()));
+    }
+  }
+
+  // NEW: Handle Delete Post
+  Future<void> _onDeletePost(DeletePostEvent event, Emitter<PostState> emit) async {
+    try {
+      // 1. Call the service to delete from Firestore
+      await _postService.deletePost(event.postId);
+      
+      // 2. Refresh the list to show the post is gone
+      add(const LoadPosts());
+    } catch (e) {
+      print("Error deleting post: $e");
+      // Optional: You could emit a temporary error state here if needed
     }
   }
 
@@ -72,7 +92,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == event.postId) {
           final updatedLikes = post.isLiked ? post.likes - 1 : post.likes + 1;
-          _updatePostLikes(post.id, updatedLikes); // Sync with Firestore
+          _updatePostLikes(post.id, updatedLikes); 
           return post.copyWith(isLiked: !post.isLiked, likes: updatedLikes);
         }
         return post;
@@ -88,7 +108,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final currentState = state as PostLoaded;
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == event.postId) {
-          _updatePostSaved(post.id, !post.isSaved); // Sync with Firestore
+          _updatePostSaved(post.id, !post.isSaved); 
           return post.copyWith(isSaved: !post.isSaved);
         }
         return post;
@@ -109,36 +129,33 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           subject: 'Check out this artwork!',
         );
       } catch (e) {
-        // Optionally emit error state or log
+        // Handle error
       }
     }
   }
 
-  // Placeholder for comments, handled by CommentBloc
   Future<void> _onOpenComments(
     OpenComments event,
     Emitter<PostState> emit,
   ) async {}
 
-  // Update Firestore post's like count
   Future<void> _updatePostLikes(String postId, int newLikes) async {
     try {
       await _firestore.collection('Posts').doc(postId).update({
         'likes': newLikes,
       });
     } catch (e) {
-      // Handle errors or logging
+       print(e);
     }
   }
 
-  // Update Firestore post's saved state
   Future<void> _updatePostSaved(String postId, bool isSaved) async {
     try {
       await _firestore.collection('Posts').doc(postId).update({
         'isSaved': isSaved,
       });
     } catch (e) {
-      // Handle errors or logging
+      print(e);
     }
   }
 }
