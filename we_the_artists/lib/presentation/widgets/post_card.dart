@@ -4,12 +4,14 @@ import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
 
 import '../../domain/entities/post_entity.dart';
-import 'package:we_the_artists/presentation/bloc/post_bloc.dart';
-import 'package:we_the_artists/presentation/bloc/post_event.dart';
+import '../../presentation/bloc/post_bloc.dart';
+import '../../presentation/bloc/post_event.dart';
 import '../bloc/comment_bloc.dart';
 import '../bloc/comment_state.dart';
 import '../bloc/comment_event.dart';
 import '../screens/artist_profile_screen.dart';
+// ADDED: Import the Image Viewer Screen
+import '../screens/image_viewer_screen.dart'; 
 import '../utils/avatar_gradients.dart';
 import '../utils/mention_text_helper.dart';
 import '../utils/time_helper.dart';
@@ -258,11 +260,11 @@ class _PostCardState extends State<PostCard>
                       onPressed: () {
                         if (commentController.text.trim().isNotEmpty) {
                           context.read<CommentBloc>().add(
-                            AddComment(
-                              postId: widget.post.id,
-                              content: commentController.text.trim(),
-                            ),
-                          );
+                                AddComment(
+                                  postId: widget.post.id,
+                                  content: commentController.text.trim(),
+                                ),
+                              );
                           commentController.clear();
                         }
                       },
@@ -378,6 +380,7 @@ class _PostCardState extends State<PostCard>
                     .toList(),
               ),
             const SizedBox(height: 12),
+            
             // Media PageView
             if (widget.post.imageUrls.isNotEmpty ||
                 widget.post.videoUrls.isNotEmpty ||
@@ -386,18 +389,32 @@ class _PostCardState extends State<PostCard>
                 height: 300,
                 child: PageView.builder(
                   controller: _pageController,
-                  itemCount:
-                      widget.post.imageUrls.length +
+                  itemCount: widget.post.imageUrls.length +
                       widget.post.videoUrls.length +
                       widget.post.audioUrls.length,
                   onPageChanged: (index) => setState(() {
                     _currentMediaIndex = index;
                   }),
                   itemBuilder: (context, index) {
+                    // === IMAGES ===
                     if (index < widget.post.imageUrls.length) {
                       final url = widget.post.imageUrls[index];
                       return GestureDetector(
                         onDoubleTap: _handleDoubleTap,
+                        // ADDED: onTap to open the Image Viewer
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ImageViewerScreen(
+                                imageUrls: widget.post.imageUrls,
+                                initialIndex: index,
+                                postId: widget.post.id, // Pass Post ID
+                                ownerId: widget.post.userId, // Pass User ID
+                              ),
+                            ),
+                          );
+                        },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.network(
@@ -408,7 +425,9 @@ class _PostCardState extends State<PostCard>
                           ),
                         ),
                       );
-                    } else if (index <
+                    } 
+                    // === VIDEOS ===
+                    else if (index <
                         widget.post.imageUrls.length +
                             widget.post.videoUrls.length) {
                       final vidIndex = index - widget.post.imageUrls.length;
@@ -446,9 +465,10 @@ class _PostCardState extends State<PostCard>
                               ),
                             )
                           : const Center(child: CircularProgressIndicator());
-                    } else {
-                      final audIndex =
-                          index -
+                    } 
+                    // === AUDIO ===
+                    else {
+                      final audIndex = index -
                           widget.post.imageUrls.length -
                           widget.post.videoUrls.length;
                       final url = widget.post.audioUrls[audIndex];
