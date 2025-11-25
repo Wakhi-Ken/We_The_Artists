@@ -139,7 +139,7 @@ class CommunityScreen extends StatelessWidget {
                   const Divider(height: 32),
               ],
             );
-          }).toList(),
+          }),
 
           const SizedBox(height: 32),
           const Text(
