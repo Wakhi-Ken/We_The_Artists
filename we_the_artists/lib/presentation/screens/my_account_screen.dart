@@ -2,23 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../bloc/post_bloc.dart';
-import '../bloc/post_event.dart';
-import '../bloc/post_state.dart';
-import '../bloc/user_bloc.dart';
-import '../bloc/user_event.dart';
-import '../bloc/user_state.dart';
-import '../bloc/theme_bloc.dart';
-import '../bloc/theme_event.dart';
-import '../bloc/theme_state.dart';
+import '../presentation/bloc/post_bloc.dart';
+import '../presentation/bloc/post_event.dart';
+import '../presentation/bloc/post_state.dart';
+import '../presentation/bloc/user_bloc.dart';
+import '../presentation/bloc/user_event.dart';
+import '../presentation/bloc/user_state.dart';
+import '../presentation/bloc/theme_bloc.dart';
+import '../presentation/bloc/theme_event.dart';
+import '../presentation/bloc/theme_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
-import 'edit_profile_screen_v2.dart';
+// FIXED: Updated import to new clean name
+import 'edit_profile_screen.dart';
 import 'recommendations_screen.dart';
-import 'package:we_the_artists/presentation/screens/Settings.dart';
+import 'Settings.dart'; 
 
 class MyAccountScreen extends StatefulWidget {
-  const MyAccountScreen({Key? key}) : super(key: key);
+  const MyAccountScreen({super.key});
 
   @override
   State<MyAccountScreen> createState() => _MyAccountScreenState();
@@ -37,16 +38,11 @@ class _MyAccountScreenState extends State<MyAccountScreen>
     final user = FirebaseAuth.instance.currentUser;
     currentUserId = user?.uid ?? '';
 
-    if (currentUserId.isNotEmpty) {
-      // Load user profile
-      context.read<UserBloc>().add(LoadUserProfile(currentUserId));
-      // Load posts
-      context.read<PostBloc>().add(const LoadPosts());
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not found. Please log in.')),
-      );
-    }
+    // Load posts
+    context.read<PostBloc>().add(const LoadPosts());
+
+    // Load user profile
+    context.read<UserBloc>().add(LoadUserProfile(currentUserId));
   }
 
   @override
@@ -84,6 +80,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
               title: const Text('Settings'),
               onTap: () {
                 Navigator.pop(context);
+                // Navigate to SettingsScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -175,7 +172,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                 } else if (state is UserError) {
                   return Center(child: Text(state.message));
                 }
-                return const SizedBox(); // Keep empty space if none of the states match
+                return const SizedBox();
               },
             ),
           ),
