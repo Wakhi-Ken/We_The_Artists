@@ -223,45 +223,7 @@ class CommunityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    final String currentUserId = 'user123'; // Replace with actual user ID
-=======
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Categories
-          ...categories.map((category) {
-            return Column(
-              children: [
-                InkWell(
-                  onTap: () => _navigateToCategoryEvents(context, category),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category.description,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                if (categories.indexOf(category) != categories.length - 1)
-                  const Divider(height: 32),
-              ],
-            );
-          }),
->>>>>>> ed05176829964d39576a41610cbb41d914822fe5
-
+    final String currentUserId = 'user123';
     return Scaffold(
       appBar: AppBar(
         title: const Text('Communities'),
