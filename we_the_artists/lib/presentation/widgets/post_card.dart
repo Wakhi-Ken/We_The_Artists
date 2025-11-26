@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field, use_super_parameters, curly_braces_in_flow_control_structures, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';

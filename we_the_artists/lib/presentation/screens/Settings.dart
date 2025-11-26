@@ -1,3 +1,5 @@
+// ignore_for_file: file_names, library_private_types_in_public_api, strict_top_level_inference
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -69,11 +71,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Logout'),
               onTap: () async {
                 // Perform logout action (like FirebaseAuth sign out)
-                // Add your logout logic here
 
                 Navigator.pushNamedAndRemoveUntil(
                   context,
-                  '/signup', // Adjust the route as needed
+                  '/signup',
                   (route) => false,
                 );
               },

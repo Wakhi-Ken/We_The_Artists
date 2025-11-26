@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Represents a social media post.
 class PostEntity extends Equatable {
   final String id;
   final String userId;
@@ -19,6 +20,7 @@ class PostEntity extends Equatable {
   final bool isSaved;
   final DateTime createdAt;
 
+  /// Constructor to initialize a PostEntity with necessary data.
   const PostEntity({
     required this.id,
     required this.userId,
@@ -38,6 +40,7 @@ class PostEntity extends Equatable {
     required this.createdAt,
   });
 
+  /// Creates a copy of the current PostEntity with updated fields.
   PostEntity copyWith({
     String? id,
     String? userId,
@@ -76,6 +79,7 @@ class PostEntity extends Equatable {
     );
   }
 
+  /// Returns a list of properties for comparison.
   @override
   List<Object?> get props => [
     id,
@@ -129,9 +133,7 @@ class PostEntity extends Equatable {
           (data['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
           [],
       likes: (data['likedBy'] as List<dynamic>?)?.length ?? 0,
-      comments: data['comments'] is int
-          ? data['comments']
-          : 0, // keeps backward compatibility
+      comments: data['comments'] is int ? data['comments'] : 0,
       isLiked:
           (data['likedBy'] as List<dynamic>?)?.contains(currentUserId) ?? false,
       isSaved:

@@ -19,7 +19,9 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   }
 
   Future<void> _onToggleTheme(
-      ToggleTheme event, Emitter<ThemeState> emit) async {
+    ToggleTheme event,
+    Emitter<ThemeState> emit,
+  ) async {
     final newValue = !state.isDarkMode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_themeKey, newValue);

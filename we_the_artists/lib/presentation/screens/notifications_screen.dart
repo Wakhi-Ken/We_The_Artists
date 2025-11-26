@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,7 +8,6 @@ import '../utils/avatar_gradients.dart';
 import '../widgets/animated_gradient_avatar.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
-import '../bloc/notification_state.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

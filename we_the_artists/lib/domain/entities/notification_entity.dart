@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// This class represents a notification in the application.
 class NotificationEntity extends Equatable {
   final String id;
   final String type;
@@ -9,6 +10,7 @@ class NotificationEntity extends Equatable {
   final DateTime createdAt;
   final bool isRead;
 
+  /// Constructor to create a NotificationEntity with all the required fields.
   const NotificationEntity({
     required this.id,
     required this.type,
@@ -19,14 +21,15 @@ class NotificationEntity extends Equatable {
     required this.isRead,
   });
 
+  ///method allows comparison between notifications to check for equality.
   @override
   List<Object?> get props => [
-        id,
-        type,
-        userId,
-        userName,
-        message,
-        createdAt,
-        isRead,
-      ];
+    id,
+    type,
+    userId,
+    userName,
+    message,
+    createdAt,
+    isRead,
+  ];
 }

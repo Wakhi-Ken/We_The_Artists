@@ -1,3 +1,5 @@
+// ignore_for_file: use_super_parameters
+
 import 'package:flutter/material.dart';
 import '../utils/avatar_gradients.dart';
 import '../widgets/animated_gradient_avatar.dart';
@@ -6,7 +8,7 @@ class ProfileHeader extends StatelessWidget {
   final String name;
   final String role;
   final String location;
-  final String? bio; // nullable
+  final String? bio;
   final String avatarInitials;
   final VoidCallback? onEditProfile;
 

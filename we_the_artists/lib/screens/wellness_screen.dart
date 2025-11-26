@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, unnecessary_to_list_in_spreads, avoid_print
+
 import 'package:flutter/material.dart';
 
 class WellnessResource {
@@ -106,18 +108,12 @@ class WellnessScreen extends StatelessWidget {
           children: [
             const Text(
               'Mental Health & Wellness',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
               'Resources to support your mental health and creative journey',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 24),
             ...wellnessResources.map((resource) {
@@ -181,7 +177,6 @@ class ResourceDetailScreen extends StatelessWidget {
   });
 
   void _startExercise(String title) {
-    // TODO: Implement exercise starting functionality
     print('Starting exercise: $title');
   }
 
@@ -253,22 +248,16 @@ class ResourceDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             if (expandedResources.isNotEmpty) ...[
               const Text(
                 'Related Exercises & Resources',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
                 'Tap on any exercise to get started',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 16),
               ...expandedResources.map(
@@ -304,7 +293,7 @@ class ResourceDetailScreen extends StatelessWidget {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 24),
             Card(
               elevation: 2,

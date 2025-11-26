@@ -29,7 +29,7 @@ class AuthService {
       'email': email,
       'role': '',
       'bio': '',
-      'avatarUrl': '', // default avatar can be added here
+      'avatarUrl': '',
       'createdAt': FieldValue.serverTimestamp(),
       'verified': false,
     });

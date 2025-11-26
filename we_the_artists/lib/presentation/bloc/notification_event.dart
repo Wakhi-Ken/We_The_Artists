@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Base class for all notification-related events.
 abstract class NotificationEvent extends Equatable {
   const NotificationEvent();
 

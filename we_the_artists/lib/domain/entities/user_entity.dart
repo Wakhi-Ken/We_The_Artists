@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Represents a user
 class UserEntity extends Equatable {
   final String id;
   final String name;
@@ -7,9 +8,10 @@ class UserEntity extends Equatable {
   final String location;
   final String bio;
   final String avatarUrl;
-  final List<String> followers; // Added
-  final List<String> following; // Added
+  final List<String> followers;
+  final List<String> following;
 
+  /// Constructor to create a UserEntity with required and optional fields.
   const UserEntity({
     required this.id,
     required this.name,
@@ -21,6 +23,7 @@ class UserEntity extends Equatable {
     this.following = const [],
   });
 
+  /// Creates a copy of the current UserEntity
   UserEntity copyWith({
     String? name,
     String? role,
@@ -42,6 +45,7 @@ class UserEntity extends Equatable {
     );
   }
 
+  /// Returns a list of properties for equality comparison.
   @override
   List<Object?> get props => [
     id,

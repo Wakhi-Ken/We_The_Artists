@@ -5,16 +5,18 @@ import '../../domain/entities/notification_entity.dart';
 import 'notification_event.dart';
 import 'notification_state.dart';
 
+/// This class manages the state and events related to notifications.
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   NotificationBloc() : super(const NotificationInitial()) {
     on<LoadNotifications>(_onLoadNotifications);
     on<MarkAsRead>(_onMarkAsRead);
     on<ClearAllNotifications>(_onClearAll);
   }
-
+  // Firestore instance to interact with the database.
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
+  /// Handles loading notifications when a LoadNotifications event is triggered.
   Future<void> _onLoadNotifications(
     LoadNotifications event,
     Emitter<NotificationState> emit,
@@ -79,9 +81,6 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
               );
             }
           }
-
-          // Mentions in post content or comments (optional)
-          // TODO: parse content for mentions and add NotificationEntity
         }
       }
 

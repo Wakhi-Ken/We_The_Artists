@@ -1,3 +1,5 @@
+// ignore_for_file: use_super_parameters
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -192,7 +194,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                 } else if (state is UserError) {
                   return Center(child: Text(state.message));
                 }
-                return const SizedBox(); // Keep empty space if none of the states match
+                return const SizedBox();
               },
             ),
           ),

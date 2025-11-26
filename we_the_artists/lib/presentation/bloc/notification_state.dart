@@ -21,8 +21,7 @@ class NotificationLoaded extends NotificationState {
 
   const NotificationLoaded(this.notifications);
 
-  int get unreadCount =>
-      notifications.where((n) => !n.isRead).length;
+  int get unreadCount => notifications.where((n) => !n.isRead).length;
 
   @override
   List<Object?> get props => [notifications];

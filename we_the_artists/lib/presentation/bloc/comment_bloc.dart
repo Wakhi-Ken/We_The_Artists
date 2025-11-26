@@ -29,6 +29,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     currentUserAvatarUrl = event.currentUserAvatarUrl;
   }
 
+  /// Asynchronously loads comments
   Future<void> _onLoadComments(
     LoadComments event,
     Emitter<CommentState> emit,
@@ -44,6 +45,7 @@ class CommentBloc extends Bloc<CommentEvent, CommentState> {
     }
   }
 
+  ///adds a new comment to a specific post when the AddComment event is triggered.
   Future<void> _onAddComment(
     AddComment event,
     Emitter<CommentState> emit,

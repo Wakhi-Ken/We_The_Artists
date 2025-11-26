@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,7 +27,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
           .orderBy('createdAt', descending: true)
           .get();
 
-      print("Posts fetched successfully"); // Debugging line
+      print("Posts fetched successfully");
 
       final posts = snapshot.docs.map((doc) {
         final data = doc.data();
@@ -56,11 +58,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         );
       }).toList();
 
-      print("Posts loaded: ${posts.length}"); // Debugging line
+      print("Posts loaded: ${posts.length}");
 
-      emit(PostLoaded(posts)); // Emitting PostLoaded state
+      emit(PostLoaded(posts));
     } catch (e) {
-      print('Error loading posts: $e'); // Debugging line
+      print('Error loading posts: $e');
       emit(PostError(e.toString()));
     }
   }
@@ -72,7 +74,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == event.postId) {
           final updatedLikes = post.isLiked ? post.likes - 1 : post.likes + 1;
-          _updatePostLikes(post.id, updatedLikes); // Sync with Firestore
+          _updatePostLikes(post.id, updatedLikes);
           return post.copyWith(isLiked: !post.isLiked, likes: updatedLikes);
         }
         return post;
@@ -88,7 +90,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       final currentState = state as PostLoaded;
       final updatedPosts = currentState.posts.map((post) {
         if (post.id == event.postId) {
-          _updatePostSaved(post.id, !post.isSaved); // Sync with Firestore
+          _updatePostSaved(post.id, !post.isSaved);
           return post.copyWith(isSaved: !post.isSaved);
         }
         return post;
@@ -114,7 +116,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
     }
   }
 
-  // Placeholder for comments, handled by CommentBloc
+  // handled by CommentBloc
   Future<void> _onOpenComments(
     OpenComments event,
     Emitter<PostState> emit,

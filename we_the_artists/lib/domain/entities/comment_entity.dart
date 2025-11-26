@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+/// Represents a comment on a post.
 class CommentEntity extends Equatable {
   final String id;
   final String postId;
@@ -9,6 +10,7 @@ class CommentEntity extends Equatable {
   final String content;
   final DateTime createdAt;
 
+  /// Constructor for creating a CommentEntity.
   const CommentEntity({
     required this.id,
     required this.postId,
@@ -19,6 +21,7 @@ class CommentEntity extends Equatable {
     required this.createdAt,
   });
 
+  /// This allows for easy equality checking between instances.
   @override
   List<Object?> get props => [
     id,

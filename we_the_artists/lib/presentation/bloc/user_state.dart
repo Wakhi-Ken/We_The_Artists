@@ -20,15 +20,9 @@ class UserLoaded extends UserState {
   final UserEntity user;
   final Map<String, bool> followedUsers;
 
-  const UserLoaded({
-    required this.user,
-    required this.followedUsers,
-  });
+  const UserLoaded({required this.user, required this.followedUsers});
 
-  UserLoaded copyWith({
-    UserEntity? user,
-    Map<String, bool>? followedUsers,
-  }) {
+  UserLoaded copyWith({UserEntity? user, Map<String, bool>? followedUsers}) {
     return UserLoaded(
       user: user ?? this.user,
       followedUsers: followedUsers ?? this.followedUsers,

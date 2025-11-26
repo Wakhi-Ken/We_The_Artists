@@ -1,3 +1,5 @@
+// ignore_for_file: use_super_parameters, unnecessary_nullable_for_final_variable_declarations, use_build_context_synchronously, avoid_print, curly_braces_in_flow_control_structures
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';

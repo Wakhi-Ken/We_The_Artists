@@ -1,5 +1,6 @@
+// ignore_for_file: unused_local_variable, unused_element, deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Event {
   final String title;
@@ -46,7 +47,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
   Future<void> _checkRSVPStatus() async {
     // In a real app, you would check against the current user's ID
     final String currentUserId = 'user123';
-    
+
     // For demo purposes, we'll use a simple check
     // In production, you'd query Firestore for the user's RSVP status
     setState(() {
@@ -64,7 +65,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
 
   Future<void> _toggleRSVP() async {
     final String currentUserId = 'user123'; // Replace with actual user ID
-    
+
     // In a real app, you would update Firestore here
     // For demo, we'll just toggle the local state
     setState(() {
@@ -86,11 +87,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: Colors.blue,
-          ),
+          Icon(icon, size: 20, color: Colors.blue),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -129,11 +126,11 @@ class _EventDetailPageState extends State<EventDetailPage> {
         if (parts.length == 2) {
           int hour = int.tryParse(parts[0]) ?? 0;
           int minute = int.tryParse(parts[1]) ?? 0;
-          
+
           String period = hour >= 12 ? 'PM' : 'AM';
           if (hour > 12) hour -= 12;
           if (hour == 0) hour = 12;
-          
+
           return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
         }
       }
@@ -185,11 +182,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Icon(
-                          Icons.people,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
+                        Icon(Icons.people, size: 16, color: Colors.grey[600]),
                         const SizedBox(width: 4),
                         Text(
                           '$_rsvpCount attending',
@@ -227,10 +220,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                     const SizedBox(height: 12),
                     Text(
                       widget.event.description,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
+                      style: const TextStyle(fontSize: 16, height: 1.5),
                     ),
                   ],
                 ),
@@ -244,8 +234,8 @@ class _EventDetailPageState extends State<EventDetailPage> {
                 child: ElevatedButton(
                   onPressed: _toggleRSVP,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isRSVPed 
-                        ? Colors.grey 
+                    backgroundColor: _isRSVPed
+                        ? Colors.grey
                         : Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -360,18 +350,10 @@ class _EventDetailRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
         ],
       ),
     );
