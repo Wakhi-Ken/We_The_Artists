@@ -19,6 +19,7 @@ import 'my_account_screen.dart';
 import 'package:we_the_artists/screens/community_screen.dart';
 import 'package:we_the_artists/screens/wellness_screen.dart';
 import 'create_post_screen_v2.dart';
+import 'package:we_the_artists/presentation/screens/Settings.dart';
 
 class HomeFeedScreen extends StatefulWidget {
   const HomeFeedScreen({super.key});
@@ -52,7 +53,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
     final theme = Theme.of(context);
 
     return BlocProvider<CommentBloc>(
-      // Providing CommentBloc here
       create: (_) => CommentBloc(),
       child: Scaffold(
         appBar: AppBar(
@@ -68,8 +68,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
           actions: _currentIndex == 0
               ? [
                   const ThemeSwitcher(),
-
-                  // 🔔 Notifications with unread badge
                   BlocBuilder<NotificationBloc, NotificationState>(
                     builder: (context, state) {
                       int unreadCount = 0;
@@ -117,8 +115,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                       );
                     },
                   ),
-
-                  // 💬 Messages
                   IconButton(
                     icon: Icon(
                       Icons.message_outlined,
@@ -136,7 +132,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                 ]
               : null,
         ),
-        // Your Drawer and Bottom NavigationBar code here
         drawer: Drawer(
           child: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
             future: FirebaseFirestore.instance
@@ -149,7 +144,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
               }
 
               final userData = snapshot.data!.data() ?? {};
-
               final name = userData['name'] ?? 'User';
               final role = userData['role'] ?? '';
               final avatar =
@@ -207,11 +201,24 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                     },
                   ),
                   ListTile(
+                    leading: const Icon(Icons.settings),
+                    title: const Text('Settings'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.event),
                     title: const Text('Events'),
                     onTap: () {
                       Navigator.pop(context);
-                      Navigator.pushNamed(context, '/event');
+                      Navigator.pushNamed(context, '/event'); // reverted
                     },
                   ),
                   ListTile(
@@ -272,7 +279,6 @@ class HomeFeedContent extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return BlocBuilder<PostBloc, PostState>(
-      // Home feed content builder
       builder: (context, state) {
         if (state is PostLoading) {
           return const Center(child: CircularProgressIndicator());

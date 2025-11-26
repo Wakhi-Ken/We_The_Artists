@@ -13,12 +13,12 @@ import '../bloc/theme_event.dart';
 import '../bloc/theme_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
-import 'edit_profile_screen_v2.dart';
+import 'package:we_the_artists/presentation/screens/edit_profile_screen.dart';
 import 'recommendations_screen.dart';
 import 'package:we_the_artists/presentation/screens/Settings.dart';
 
 class MyAccountScreen extends StatefulWidget {
-  const MyAccountScreen({super.key});
+  const MyAccountScreen({Key? key}) : super(key: key);
 
   @override
   State<MyAccountScreen> createState() => _MyAccountScreenState();
@@ -37,11 +37,16 @@ class _MyAccountScreenState extends State<MyAccountScreen>
     final user = FirebaseAuth.instance.currentUser;
     currentUserId = user?.uid ?? '';
 
-    // Load posts
-    context.read<PostBloc>().add(const LoadPosts());
-
-    // Load user profile
-    context.read<UserBloc>().add(LoadUserProfile(currentUserId));
+    if (currentUserId.isNotEmpty) {
+      // Load user profile
+      context.read<UserBloc>().add(LoadUserProfile(currentUserId));
+      // Load posts
+      context.read<PostBloc>().add(const LoadPosts());
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not found. Please log in.')),
+      );
+    }
   }
 
   @override
@@ -79,7 +84,6 @@ class _MyAccountScreenState extends State<MyAccountScreen>
               title: const Text('Settings'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to SettingsScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -171,7 +175,7 @@ class _MyAccountScreenState extends State<MyAccountScreen>
                 } else if (state is UserError) {
                   return Center(child: Text(state.message));
                 }
-                return const SizedBox();
+                return const SizedBox(); // Keep empty space if none of the states match
               },
             ),
           ),
