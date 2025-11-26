@@ -1,8 +1,5 @@
 # We The Artists
 
-<<<<<<< HEAD
-**We The Artists** is a social networking Flutter application designed for artists to showcase their work, share posts, and connect with other creatives. Users can create posts with images and videos, add tags, interact with other users’ posts, and manage their profiles.
-=======
 **We The Artists** is a social platform for artists to grow creatively and professionally.  
 
 ### Key Uses
@@ -17,8 +14,6 @@
 - **Discover Events:** Find local and online workshops for skill development.  
 
 **✅ One platform to share, learn, collaborate, and thrive as an artist.**
->>>>>>> 5203fcb2eaa4e957a36767b944c741e81f9abd8b
-
 ---
 
 ## Features
