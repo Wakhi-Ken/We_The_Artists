@@ -74,7 +74,8 @@ class Workshop {
       title: data?['title'] as String? ?? 'Untitled Workshop',
       presenter: data?['presenter'] as String? ?? 'Unknown Presenter',
       date: data?['date'] as String? ?? 'Date TBD',
-      description: data?['description'] as String? ?? 'No description available.',
+      description:
+          data?['description'] as String? ?? 'No description available.',
       communityId: data?['communityId'] as String? ?? '',
       creatorId: data?['creatorId'] as String? ?? '',
       createdAt: data?['createdAt'] as Timestamp? ?? Timestamp.now(),
@@ -138,16 +139,21 @@ class CommunityScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _toggleFollowCommunity(CommunityCategory category, String userId) async {
-    final docRef = FirebaseFirestore.instance.collection('Community').doc(category.id);
-    
+  Future<void> _toggleFollowCommunity(
+    CommunityCategory category,
+    String userId,
+  ) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('Community')
+        .doc(category.id);
+
     if (category.followerUids.contains(userId)) {
       await docRef.update({
-        'followerUids': FieldValue.arrayRemove([userId])
+        'followerUids': FieldValue.arrayRemove([userId]),
       });
     } else {
       await docRef.update({
-        'followerUids': FieldValue.arrayUnion([userId])
+        'followerUids': FieldValue.arrayUnion([userId]),
       });
     }
   }
@@ -189,7 +195,7 @@ class CommunityScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (nameController.text.trim().isNotEmpty && 
+                if (nameController.text.trim().isNotEmpty &&
                     descriptionController.text.trim().isNotEmpty) {
                   await _createCommunity(
                     nameController.text.trim(),
@@ -207,7 +213,11 @@ class CommunityScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _createCommunity(String name, String description, String userId) async {
+  Future<void> _createCommunity(
+    String name,
+    String description,
+    String userId,
+  ) async {
     try {
       await FirebaseFirestore.instance.collection('Community').add({
         'name': name,
@@ -223,45 +233,7 @@ class CommunityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    final String currentUserId = 'user123'; // Replace with actual user ID
-=======
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Categories
-          ...categories.map((category) {
-            return Column(
-              children: [
-                InkWell(
-                  onTap: () => _navigateToCategoryEvents(context, category),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        category.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        category.description,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                if (categories.indexOf(category) != categories.length - 1)
-                  const Divider(height: 32),
-              ],
-            );
-          }),
->>>>>>> ed05176829964d39576a41610cbb41d914822fe5
-
+    final String currentUserId = 'user123';
     return Scaffold(
       appBar: AppBar(
         title: const Text('Communities'),
@@ -282,24 +254,20 @@ class CommunityScreen extends StatelessWidget {
           children: [
             const Text(
               'Art Communities',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             const Text(
               'Join communities to connect with artists in your field',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 24),
 
             // Communities from Firestore
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('Community').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('Community')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
@@ -314,7 +282,9 @@ class CommunityScreen extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final List<CommunityCategory> firestoreCategories = snapshot.data!.docs
+                final List<CommunityCategory> firestoreCategories = snapshot
+                    .data!
+                    .docs
                     .map((doc) => CommunityCategory.fromFirestore(doc))
                     .toList();
 
@@ -323,11 +293,7 @@ class CommunityScreen extends StatelessWidget {
                 if (firestoreCategories.isEmpty) {
                   return Column(
                     children: [
-                      const Icon(
-                        Icons.group,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
+                      const Icon(Icons.group, size: 64, color: Colors.grey),
                       const SizedBox(height: 16),
                       const Text(
                         'No communities yet',
@@ -349,9 +315,11 @@ class CommunityScreen extends StatelessWidget {
 
                 return Column(
                   children: firestoreCategories.map((category) {
-                    final isFollowing = category.followerUids.contains(currentUserId);
+                    final isFollowing = category.followerUids.contains(
+                      currentUserId,
+                    );
                     final isCreator = category.creatorId == currentUserId;
-                    
+
                     return Column(
                       children: [
                         Card(
@@ -365,11 +333,13 @@ class CommunityScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
@@ -383,17 +353,26 @@ class CommunityScreen extends StatelessWidget {
                                               if (isCreator) ...[
                                                 const SizedBox(width: 8),
                                                 Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2,
+                                                      ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.blue.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(12),
+                                                    color: Colors.blue
+                                                        .withOpacity(0.1),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                   ),
                                                   child: const Text(
                                                     'Creator',
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       color: Colors.blue,
-                                                      fontWeight: FontWeight.bold,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
                                                 ),
@@ -413,11 +392,18 @@ class CommunityScreen extends StatelessWidget {
                                     ),
                                     IconButton(
                                       icon: Icon(
-                                        isFollowing ? Icons.favorite : Icons.favorite_border,
-                                        color: isFollowing ? Colors.red : Colors.grey,
+                                        isFollowing
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isFollowing
+                                            ? Colors.red
+                                            : Colors.grey,
                                         size: 28,
                                       ),
-                                      onPressed: () => _toggleFollowCommunity(category, currentUserId),
+                                      onPressed: () => _toggleFollowCommunity(
+                                        category,
+                                        currentUserId,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -434,12 +420,20 @@ class CommunityScreen extends StatelessWidget {
                                     ),
                                     const Spacer(),
                                     ElevatedButton(
-                                      onPressed: () => _navigateToCategoryEvents(context, category),
+                                      onPressed: () =>
+                                          _navigateToCategoryEvents(
+                                            context,
+                                            category,
+                                          ),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(context).primaryColor,
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).primaryColor,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
                                         ),
                                       ),
                                       child: const Text('View Events'),
@@ -447,8 +441,13 @@ class CommunityScreen extends StatelessWidget {
                                     if (isCreator) ...[
                                       const SizedBox(width: 8),
                                       IconButton(
-                                        icon: const Icon(Icons.add_circle_outline),
-                                        onPressed: () => _showCreateEventDialog(context, category),
+                                        icon: const Icon(
+                                          Icons.add_circle_outline,
+                                        ),
+                                        onPressed: () => _showCreateEventDialog(
+                                          context,
+                                          category,
+                                        ),
                                         tooltip: 'Add Event',
                                         color: Theme.of(context).primaryColor,
                                       ),
@@ -459,7 +458,8 @@ class CommunityScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (firestoreCategories.indexOf(category) != firestoreCategories.length - 1)
+                        if (firestoreCategories.indexOf(category) !=
+                            firestoreCategories.length - 1)
                           const SizedBox(height: 16),
                       ],
                     );
@@ -469,25 +469,19 @@ class CommunityScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 32),
-            
+
             // Upcoming Workshops
             const Text(
               'Upcoming Workshops',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
               'Join workshops to learn and grow with fellow artists',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 16),
-            
+
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('workshops')
@@ -515,11 +509,7 @@ class CommunityScreen extends StatelessWidget {
                 if (firestoreWorkshops.isEmpty) {
                   return Column(
                     children: [
-                      const Icon(
-                        Icons.event,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
+                      const Icon(Icons.event, size: 64, color: Colors.grey),
                       const SizedBox(height: 16),
                       const Text(
                         'No workshops yet',
@@ -564,7 +554,8 @@ class CommunityScreen extends StatelessWidget {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           workshop.title,
@@ -655,7 +646,10 @@ class CommunityScreen extends StatelessWidget {
     );
   }
 
-  void _showCreateEventDialog(BuildContext context, CommunityCategory category) {
+  void _showCreateEventDialog(
+    BuildContext context,
+    CommunityCategory category,
+  ) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController presenterController = TextEditingController();
     final TextEditingController dateController = TextEditingController();
@@ -739,7 +733,7 @@ class CommunityScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.trim().isNotEmpty && 
+                if (titleController.text.trim().isNotEmpty &&
                     presenterController.text.trim().isNotEmpty &&
                     dateController.text.trim().isNotEmpty &&
                     locationController.text.trim().isNotEmpty &&
@@ -767,10 +761,10 @@ class CommunityScreen extends StatelessWidget {
   }
 
   Future<void> _createEvent(
-    String title, 
-    String presenter, 
-    String date, 
-    String description, 
+    String title,
+    String presenter,
+    String date,
+    String description,
     String communityId,
     String userId,
     String location,
@@ -797,10 +791,7 @@ class CommunityScreen extends StatelessWidget {
 class CategoryEventsScreen extends StatelessWidget {
   final CommunityCategory category;
 
-  const CategoryEventsScreen({
-    super.key,
-    required this.category,
-  });
+  const CategoryEventsScreen({super.key, required this.category});
 
   void _navigateToEventDetail(BuildContext context, Workshop workshop) {
     DateTime eventDate;
@@ -911,7 +902,7 @@ class CategoryEventsScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.trim().isNotEmpty && 
+                if (titleController.text.trim().isNotEmpty &&
                     presenterController.text.trim().isNotEmpty &&
                     dateController.text.trim().isNotEmpty &&
                     locationController.text.trim().isNotEmpty &&
@@ -939,10 +930,10 @@ class CategoryEventsScreen extends StatelessWidget {
   }
 
   Future<void> _createEvent(
-    String title, 
-    String presenter, 
-    String date, 
-    String description, 
+    String title,
+    String presenter,
+    String date,
+    String description,
     String communityId,
     String userId,
     String location,
@@ -1014,11 +1005,7 @@ class CategoryEventsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.event_busy,
-                    size: 64,
-                    color: Colors.grey,
-                  ),
+                  Icon(Icons.event_busy, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   Text(
                     'No events scheduled yet',
@@ -1026,9 +1013,9 @@ class CategoryEventsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isCreator 
-                      ? 'Create the first event for your community!'
-                      : 'Check back later for upcoming workshops',
+                    isCreator
+                        ? 'Create the first event for your community!'
+                        : 'Check back later for upcoming workshops',
                     style: TextStyle(fontSize: 14, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
@@ -1084,7 +1071,10 @@ class CategoryEventsScreen extends StatelessWidget {
                       ),
                       if (isEventCreator)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.green.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -1111,10 +1101,7 @@ class CategoryEventsScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         workshop.date,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 4),
                       Row(

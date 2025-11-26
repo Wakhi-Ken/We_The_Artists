@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../domain/entities/post_entity.dart';
 import 'package:we_the_artists/presentation/bloc/post_bloc.dart';
@@ -27,19 +29,16 @@ class _PostCardState extends State<PostCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _likeAnimationController;
   late Animation<double> _likeAnimation;
-  bool _showLikeAnimation = false;
   late PageController _pageController;
+
   final Map<String, VideoPlayerController> _videoControllers = {};
   final Map<String, AudioPlayer> _audioPlayers = {};
-
-  List<String> _comments = [];
   final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
-
     _likeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -50,6 +49,17 @@ class _PostCardState extends State<PostCard>
         curve: Curves.elasticOut,
       ),
     );
+
+    // Initialize video controllers
+    for (var url in widget.post.videoUrls) {
+      _videoControllers[url] = VideoPlayerController.network(url)
+        ..initialize().then((_) => setState(() {}));
+    }
+
+    // Initialize audio players
+    for (var url in widget.post.audioUrls) {
+      _audioPlayers[url] = AudioPlayer()..setUrl(url);
+    }
   }
 
   @override
@@ -66,8 +76,30 @@ class _PostCardState extends State<PostCard>
     if (!widget.post.isLiked) {
       context.read<PostBloc>().add(ToggleLike(widget.post.id));
     }
-    setState(() => _showLikeAnimation = true);
-    _likeAnimationController.forward();
+    _likeAnimationController.forward(from: 0);
+  }
+
+  Future<void> _addComment(String text) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || text.trim().isEmpty) return;
+
+    final commentRef = FirebaseFirestore.instance
+        .collection('Posts')
+        .doc(widget.post.id)
+        .collection('comments');
+
+    await commentRef.add({
+      'text': text.trim(),
+      'userId': currentUser.uid,
+      'userName': currentUser.displayName ?? 'Anonymous',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    // Optional: increment post's comment count
+    await FirebaseFirestore.instance
+        .collection('Posts')
+        .doc(widget.post.id)
+        .update({'comments': FieldValue.increment(1)});
   }
 
   void _showCommentsDialog() {
@@ -96,45 +128,75 @@ class _PostCardState extends State<PostCard>
                   ),
                   const SizedBox(height: 12),
                   Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      itemCount: _comments.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(_comments[index]),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              setState(() => _comments.removeAt(index));
-                            },
-                          ),
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('Posts')
+                          .doc(widget.post.id)
+                          .collection('comments')
+                          .orderBy('createdAt', descending: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        final commentDocs = snapshot.data!.docs;
+                        if (commentDocs.isEmpty) {
+                          return const Center(child: Text("No comments yet"));
+                        }
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: commentDocs.length,
+                          itemBuilder: (context, index) {
+                            final data =
+                                commentDocs[index].data()
+                                    as Map<String, dynamic>;
+                            return ListTile(
+                              title: Text(data['userName'] ?? 'Unknown'),
+                              subtitle: Text(data['text'] ?? ''),
+                              trailing: Text(
+                                TimeHelper.getRelativeTime(
+                                  (data['createdAt'] as Timestamp?)?.toDate() ??
+                                      DateTime.now(),
+                                ),
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
                   ),
-                  TextField(
-                    controller: _commentController,
-                    decoration: InputDecoration(
-                      hintText: 'Add a comment...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _commentController,
+                          decoration: const InputDecoration(
+                            hintText: "Add a comment...",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(24),
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: () async {
+                          if (_commentController.text.trim().isNotEmpty) {
+                            await _addComment(_commentController.text.trim());
+                            _commentController.clear();
+                          }
+                        },
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_commentController.text.trim().isNotEmpty) {
-                        setState(() {
-                          _comments.add(_commentController.text.trim());
-                          _commentController.clear();
-                        });
-                      }
-                    },
-                    child: const Text('Add Comment'),
+                    ],
                   ),
                 ],
               ),
@@ -158,7 +220,7 @@ class _PostCardState extends State<PostCard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User info + delete option
+            // Header
             Row(
               children: [
                 GestureDetector(
@@ -236,7 +298,7 @@ class _PostCardState extends State<PostCard>
               ],
             ),
             const SizedBox(height: 12),
-            // Post content
+            // Content
             RichText(
               text: MentionTextHelper.buildMentionText(
                 widget.post.content,
@@ -265,18 +327,16 @@ class _PostCardState extends State<PostCard>
                     .toList(),
               ),
             const SizedBox(height: 12),
-            // Media PageView
+            // Media
             if (widget.post.imageUrls.isNotEmpty ||
-                widget.post.videoUrls.isNotEmpty ||
-                widget.post.audioUrls.isNotEmpty)
+                widget.post.videoUrls.isNotEmpty)
               SizedBox(
                 height: 300,
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount:
                       widget.post.imageUrls.length +
-                      widget.post.videoUrls.length +
-                      widget.post.audioUrls.length,
+                      widget.post.videoUrls.length,
                   itemBuilder: (context, index) {
                     if (index < widget.post.imageUrls.length) {
                       final url = widget.post.imageUrls[index];
@@ -284,17 +344,10 @@ class _PostCardState extends State<PostCard>
                         onDoubleTap: _handleDoubleTap,
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            url,
-                            width: double.infinity,
-                            height: 300,
-                            fit: BoxFit.cover,
-                          ),
+                          child: Image.network(url, fit: BoxFit.cover),
                         ),
                       );
-                    } else if (index <
-                        widget.post.imageUrls.length +
-                            widget.post.videoUrls.length) {
+                    } else {
                       final vidIndex = index - widget.post.imageUrls.length;
                       final url = widget.post.videoUrls[vidIndex];
                       final controller = _videoControllers[url]!;
@@ -308,7 +361,6 @@ class _PostCardState extends State<PostCard>
                             )
                           : const Center(child: CircularProgressIndicator());
                     }
-                    return const SizedBox();
                   },
                 ),
               ),
@@ -327,10 +379,10 @@ class _PostCardState extends State<PostCard>
                 GestureDetector(
                   onTap: _showCommentsDialog,
                   child: Row(
-                    children: const [
-                      Icon(Icons.comment_outlined, size: 20),
-                      SizedBox(width: 4),
-                      Text('0'),
+                    children: [
+                      const Icon(Icons.comment_outlined, size: 20),
+                      const SizedBox(width: 4),
+                      Text('${widget.post.comments}'),
                     ],
                   ),
                 ),
