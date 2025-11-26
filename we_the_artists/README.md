@@ -1,24 +1,19 @@
 # We The Artists
 
-**We The Artists is a social platform for artists to grow creatively and professionally. Key uses include:
+**We The Artists** is a social platform for artists to grow creatively and professionally.  
 
-Showcase Art: Share images, videos, and audio of your work with tags.
+### Key Uses
 
-Get Feedback: Receive constructive comments to improve your skills.
+- **Showcase Art:** Share images, videos, and audio of your work with tags.  
+- **Get Feedback:** Receive constructive comments to improve your skills.  
+- **Connect & Collaborate:** Find peers and collaborate on projects.  
+- **Learn & Grow:** Access tutorials, workshops, and tips to monetize art.  
+- **Wellness Support:** Read motivational content and manage creative stress.  
+- **Profile Management:** Build a portfolio, manage posts, and showcase achievements.  
+- **Engagement:** Receive notifications and bookmark inspiring works.  
+- **Discover Events:** Find local and online workshops for skill development.  
 
-Connect & Collaborate: Find peers and collaborate on projects.
-
-Learn & Grow: Access tutorials, workshops, and tips to monetize art.
-
-Wellness Support: Read motivational content and manage creative stress.
-
-Profile Management: Build a portfolio, manage posts, and showcase achievements.
-
-Engagement: Receive notifications and bookmark inspiring works.
-
-Discover Events: Find local and online workshops for skill development.
-
-✅ One platform to share, learn, collaborate, and thrive as an artist.
+**✅ One platform to share, learn, collaborate, and thrive as an artist.**
 
 ---
 
