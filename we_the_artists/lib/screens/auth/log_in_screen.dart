@@ -21,134 +21,141 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authService = ref.read(authServiceProvider);
 
-    return Scaffold(
-      // appBar: AppBar(title: const Text('Login')),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [const Color.fromARGB(255, 124, 168, 243),
-            Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter
+    // Custom theme for this screen
+    final customTheme = ThemeData(
+      brightness: Brightness.light,
+      primaryColor: const Color(0xFF3B62FF),
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        labelStyle: const TextStyle(color: Colors.black87),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF3B62FF),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'Welcome back!',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 26,
-                    color: Color(0xFF1C1C1C),
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Sign In to continue',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.normal,
-                    fontSize: 18,
-                    color: Color(0xFF1C1C1C),
-                  ),
-                ),
-                SizedBox(height: 26),
-                TextField(
-                  controller: emailCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16),
-                TextField(
-                  controller: passwordCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 26),
-                if (error != null)
-                  Text(error!, style: const TextStyle(color: Colors.red)),
-                SizedBox(
-                  width: double.infinity,
-                  height: 49,
-                  child: ElevatedButton(
-                    onPressed: loading
-                        ? null
-                        : () async {
-                            setState(() => loading = true);
-                            try {
-                              // Sign in user
-                              User? user = await authService.signIn(
-                                emailCtrl.text.trim(),
-                                passwordCtrl.text.trim(),
-                              );
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: const Color(0xFF3B62FF)),
+      ),
+    );
 
-                              if (user != null) {
-                                final userDoc = await FirebaseFirestore.instance
-                                    .collection('Users')
-                                    .doc(user.uid)
-                                    .get();
+    return Theme(
+      data: customTheme, // Apply custom theme
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color.fromARGB(255, 124, 168, 243), Colors.white],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Welcome back!',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Sign In to continue',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.normal,
+                      fontSize: 18,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 26),
+                  TextField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: passwordCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: 'Password'),
+                  ),
+                  const SizedBox(height: 26),
+                  if (error != null)
+                    Text(error!, style: const TextStyle(color: Colors.red)),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 49,
+                    child: ElevatedButton(
+                      onPressed: loading
+                          ? null
+                          : () async {
+                              setState(() => loading = true);
+                              try {
+                                // Sign in user
+                                User? user = await authService.signIn(
+                                  emailCtrl.text.trim(),
+                                  passwordCtrl.text.trim(),
+                                );
 
-                                // Create Firestore profile if missing
-                                if (!userDoc.exists) {
-                                  await FirebaseFirestore.instance
+                                if (user != null) {
+                                  final userDoc = await FirebaseFirestore
+                                      .instance
                                       .collection('Users')
                                       .doc(user.uid)
-                                      .set({
-                                        'name': user.displayName ?? '',
-                                        'role': '',
-                                        'location': '',
-                                        'bio': '',
-                                        'avatarUrl': '',
-                                        'createdAt':
-                                            FieldValue.serverTimestamp(),
-                                      });
-                                }
-                              }
+                                      .get();
 
-                              if (mounted) {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  '/home',
-                                );
+                                  if (!userDoc.exists) {
+                                    await FirebaseFirestore.instance
+                                        .collection('Users')
+                                        .doc(user.uid)
+                                        .set({
+                                          'name': user.displayName ?? '',
+                                          'role': '',
+                                          'location': '',
+                                          'bio': '',
+                                          'avatarUrl': '',
+                                          'createdAt':
+                                              FieldValue.serverTimestamp(),
+                                        });
+                                  }
+                                }
+
+                                if (mounted) {
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    '/home',
+                                  );
+                                }
+                              } on FirebaseAuthException catch (e) {
+                                setState(() => error = e.message);
+                              } finally {
+                                setState(() => loading = false);
                               }
-                            } on FirebaseAuthException catch (e) {
-                              setState(() => error = e.message);
-                            } finally {
-                              setState(() => loading = false);
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF3B62FF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                            },
+                      child: loading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Login'),
                     ),
-                    child: loading
-                        ? const CircularProgressIndicator()
-                        : const Text(
-                            'Login',
-                            style: TextStyle(color: Colors.white),
-                          ),
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/signup');
-                  },
-                  child: const Text('Don’t have an account? Sign up'),
-                ),
-              ],
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/signup');
+                    },
+                    child: const Text('Don’t have an account? Sign up'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
