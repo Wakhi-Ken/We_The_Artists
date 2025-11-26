@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/avatar_gradients.dart';
 import '../widgets/animated_gradient_avatar.dart';
+import '../widgets/post_card.dart';
+import '../../domain/entities/post_entity.dart';
 
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({super.key});
@@ -20,9 +22,24 @@ class MessagesScreen extends StatelessWidget {
     }
   }
 
+  /// Fetch all users once to avoid unknown usernames
+  Future<Map<String, String>> _fetchUserNames() async {
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('Users')
+        .get();
+    final Map<String, String> userMap = {};
+    for (var doc in userSnapshot.docs) {
+      final data = doc.data();
+      userMap[doc.id] = data['name'] ?? 'Unknown';
+    }
+    return userMap;
+  }
+
+  /// Fetch all comments across posts of current user
   Future<List<Map<String, dynamic>>> _fetchComments(
     String currentUserId,
   ) async {
+    final userMap = await _fetchUserNames();
     final postsSnapshot = await FirebaseFirestore.instance
         .collection('Posts')
         .where('userId', isEqualTo: currentUserId)
@@ -41,22 +58,66 @@ class MessagesScreen extends StatelessWidget {
 
       for (var c in commentSnapshot.docs) {
         final data = c.data();
+        final senderId = data['userId'] ?? '';
+        final senderName = userMap[senderId] ?? 'Unknown';
+
         comments.add({
           'postId': postId,
           'commentId': c.id,
           'content': data['text'] ?? '',
-          'senderId': data['userId'] ?? '',
-          'senderName': data['userName'] ?? 'Unknown',
+          'senderId': senderId,
+          'senderName': senderName,
           'timestamp':
               (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         });
       }
     }
 
-    // Sort all comments by timestamp descending
     comments.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
-
     return comments;
+  }
+
+  /// Open a specific post using PostCard
+  void _openPost(BuildContext context, String postId) {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('Post')),
+          body: FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('Posts')
+                .doc(postId)
+                .get(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || !snapshot.data!.exists) {
+                return const Center(child: Text('Post not found.'));
+              }
+
+              final data = snapshot.data!.data() as Map<String, dynamic>;
+              final post = PostEntity.fromFirestore(
+                data,
+                snapshot.data!.id,
+                currentUserId,
+              );
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: PostCard(
+                  post: post,
+                  isOwnPost: post.userId == currentUserId,
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -132,16 +193,7 @@ class MessagesScreen extends StatelessWidget {
                   _formatTime(comment['timestamp']),
                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Opening comment on post ${comment['postId']}',
-                      ),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onTap: () => _openPost(context, comment['postId']),
               );
             },
           );

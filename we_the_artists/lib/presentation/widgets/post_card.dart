@@ -35,6 +35,8 @@ class _PostCardState extends State<PostCard>
   final Map<String, AudioPlayer> _audioPlayers = {};
   final TextEditingController _commentController = TextEditingController();
 
+  bool _isFollowing = false;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +62,54 @@ class _PostCardState extends State<PostCard>
     for (var url in widget.post.audioUrls) {
       _audioPlayers[url] = AudioPlayer()..setUrl(url);
     }
+
+    // Load follow state
+    _loadFollowState();
+  }
+
+  Future<void> _loadFollowState() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || widget.post.userId == currentUser.uid) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('Users')
+        .doc(currentUser.uid)
+        .collection('following')
+        .doc(widget.post.userId)
+        .get();
+
+    setState(() {
+      _isFollowing = doc.exists;
+    });
+  }
+
+  Future<void> _toggleFollow() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || widget.post.userId == currentUser.uid) return;
+
+    final followingRef = FirebaseFirestore.instance
+        .collection('Users')
+        .doc(currentUser.uid)
+        .collection('following')
+        .doc(widget.post.userId);
+
+    final followersRef = FirebaseFirestore.instance
+        .collection('Users')
+        .doc(widget.post.userId)
+        .collection('followers')
+        .doc(currentUser.uid);
+
+    if (_isFollowing) {
+      await followingRef.delete();
+      await followersRef.delete();
+    } else {
+      await followingRef.set({'followedAt': FieldValue.serverTimestamp()});
+      await followersRef.set({'followedAt': FieldValue.serverTimestamp()});
+    }
+
+    setState(() {
+      _isFollowing = !_isFollowing;
+    });
   }
 
   @override
@@ -88,7 +138,6 @@ class _PostCardState extends State<PostCard>
         .doc(widget.post.id);
     final commentRef = postRef.collection('comments');
 
-    // Add comment
     await commentRef.add({
       'text': text.trim(),
       'userId': currentUser.uid,
@@ -96,10 +145,8 @@ class _PostCardState extends State<PostCard>
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Increment post's comment count
     await postRef.update({'comments': FieldValue.increment(1)});
 
-    // Add notification for the post owner
     if (currentUser.uid != widget.post.userId) {
       final notificationRef = FirebaseFirestore.instance
           .collection('Users')
@@ -262,37 +309,71 @@ class _PostCardState extends State<PostCard>
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ArtistProfileScreen(userId: widget.post.userId),
-                        ),
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.post.userName,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: theme.textTheme.bodyLarge?.color,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ArtistProfileScreen(
+                                    userId: widget.post.userId,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              widget.post.userName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: theme.textTheme.bodyLarge?.color,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (widget.post.userId !=
+                              FirebaseAuth.instance.currentUser?.uid)
+                            GestureDetector(
+                              onTap: _toggleFollow,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _isFollowing
+                                      ? Colors.grey[300]
+                                      : Colors.blue,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  _isFollowing ? 'Following' : 'Follow',
+                                  style: TextStyle(
+                                    color: _isFollowing
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.post.userRole} · ${widget.post.userLocation}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                            0.7,
                           ),
                         ),
-                        Text(
-                          '${widget.post.userRole} · ${widget.post.userLocation}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: theme.textTheme.bodyMedium?.color
-                                ?.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 if (widget.isOwnPost)
