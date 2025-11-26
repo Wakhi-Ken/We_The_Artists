@@ -12,7 +12,7 @@ class WellnessScreen extends StatelessWidget {
 
   final List<WellnessResource> wellnessResources = const [
     WellnessResource(
-      title: '5 Minute Gronding Exercises',
+      title: '5 Minute Grounding Exercises',
       description: 'Quick techniques to center yourself and reduce anxiety',
     ),
     WellnessResource(
@@ -21,13 +21,13 @@ class WellnessScreen extends StatelessWidget {
           'Strategies for receiving feedback while maintaining self-esteem',
     ),
     WellnessResource(
-      title: 'Local Councelling and peer groups',
+      title: 'Local Counseling and peer groups',
       description: 'Find professional support and community resources near you',
     ),
   ];
 
   final Map<String, List<WellnessResource>> expandedResources = {
-    '5 Minute Gronding Exercises': [
+    '5 Minute Grounding Exercises': [
       const WellnessResource(
         title: 'Box Breathing',
         description: '4-second inhale, 4-second hold, 4-second exhale',
@@ -57,7 +57,7 @@ class WellnessScreen extends StatelessWidget {
         description: 'View feedback as opportunities for improvement',
       ),
     ],
-    'Local Councelling and peer groups': [
+    'Local Counseling and peer groups': [
       const WellnessResource(
         title: 'Artist Support Groups',
         description: 'Weekly meetings for creative professionals',
@@ -93,37 +93,83 @@ class WellnessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: wellnessResources.map((resource) {
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            elevation: 1,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Wellness Resources'),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Mental Health & Wellness',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              title: Text(
-                resource.title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => _navigateToResourceDetail(context, resource),
             ),
-          );
-        }).toList(),
+            const SizedBox(height: 8),
+            const Text(
+              'Resources to support your mental health and creative journey',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ...wellnessResources.map((resource) {
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.health_and_safety,
+                      color: Colors.green,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    resource.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  subtitle: Text(
+                    resource.description,
+                    style: const TextStyle(fontSize: 14),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => _navigateToResourceDetail(context, resource),
+                ),
+              );
+            }).toList(),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Detail screen for wellness resources
 class ResourceDetailScreen extends StatelessWidget {
   final WellnessResource mainResource;
   final List<WellnessResource> expandedResources;
@@ -134,56 +180,168 @@ class ResourceDetailScreen extends StatelessWidget {
     required this.expandedResources,
   });
 
+  void _startExercise(String title) {
+    // TODO: Implement exercise starting functionality
+    print('Starting exercise: $title');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(mainResource.title)),
+      appBar: AppBar(
+        title: Text(mainResource.title),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      mainResource.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: const Icon(
+                            Icons.health_and_safety,
+                            color: Colors.green,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                mainResource.title,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                mainResource.description,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(mainResource.description),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 24),
+            
             if (expandedResources.isNotEmpty) ...[
               const Text(
                 'Related Exercises & Resources',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Tap on any exercise to get started',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 16),
               ...expandedResources.map(
                 (resource) => Card(
                   margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: Colors.green,
+                        size: 20,
+                      ),
+                    ),
                     title: Text(
                       resource.title,
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(resource.description),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => print('Starting: ${resource.title}'),
+                    onTap: () => _startExercise(resource.title),
                   ),
                 ),
               ),
             ],
+            
+            const SizedBox(height: 24),
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Need Immediate Help?',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'If you\'re experiencing a mental health crisis, please contact emergency services or a crisis helpline immediately.',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Crisis Helpline: 988',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
