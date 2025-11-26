@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../bloc/post_bloc.dart';
 import '../bloc/post_event.dart';
@@ -13,9 +14,9 @@ import '../bloc/theme_event.dart';
 import '../bloc/theme_state.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/post_card.dart';
-import 'package:we_the_artists/presentation/screens/edit_profile_screen.dart';
+import 'edit_profile_screen.dart';
 import 'recommendations_screen.dart';
-import 'package:we_the_artists/presentation/screens/Settings.dart';
+import 'Settings.dart';
 
 class MyAccountScreen extends StatefulWidget {
   const MyAccountScreen({Key? key}) : super(key: key);
@@ -97,6 +98,22 @@ class _MyAccountScreenState extends State<MyAccountScreen>
               title: const Text('Share Profile'),
               onTap: () {
                 Navigator.pop(context);
+
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  // Example: replace this with your app's profile URL/deep link
+                  final profileUrl = 'https://yourapp.com/user/${user.uid}';
+                  Share.share(
+                    'Check out my profile on WeTheArtists: $profileUrl',
+                    subject: 'My Artist Profile',
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Unable to share: user not found'),
+                    ),
+                  );
+                }
               },
             ),
           ],

@@ -27,17 +27,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
+  // IMAGE PICKERS
   Future<void> _pickImages() async {
     final List<XFile>? images = await _picker.pickMultiImage();
     if (images != null && images.isNotEmpty) {
       setState(() => _selectedImages.addAll(images));
-    }
-  }
-
-  Future<void> _pickVideo() async {
-    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
-    if (video != null) {
-      setState(() => _selectedVideos.add(video));
     }
   }
 
@@ -48,6 +42,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
+  // VIDEO PICKER
+  Future<void> _pickVideo() async {
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      setState(() => _selectedVideos.add(video));
+    }
+  }
+
+  // REMOVE MEDIA
   void _removeMedia(int index, String type) {
     setState(() {
       if (type == 'image') _selectedImages.removeAt(index);
@@ -55,6 +58,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
   }
 
+  // TAGS
   void _addTag() {
     final tag = _tagController.text.trim();
     if (tag.isNotEmpty && tag.length <= 20 && !_tags.contains(tag)) {
@@ -71,43 +75,42 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   void _removeTag(String tag) => setState(() => _tags.remove(tag));
 
+  // UPLOAD FILES TO FIREBASE STORAGE
   Future<List<String>> _uploadFiles(List<XFile> files, String folder) async {
     List<String> urls = [];
     final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      throw Exception('User not found.');
-    }
+    if (currentUser == null) throw Exception('User not found.');
 
     for (var file in files) {
       try {
         final ref = FirebaseStorage.instance.ref().child(
           'posts/${currentUser.uid}/$folder/${DateTime.now().millisecondsSinceEpoch}_${file.name}',
         );
+
         final task = ref.putFile(File(file.path));
+
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (_) => const Center(child: CircularProgressIndicator()),
         );
+
         final snapshot = await task.whenComplete(() {});
         urls.add(await snapshot.ref.getDownloadURL());
+
         Navigator.of(context).pop();
       } catch (e) {
         Navigator.of(context).pop();
         print('❌ Failed to upload $folder: $e');
       }
     }
-
     return urls;
   }
 
+  // SAVE POST
   Future<void> _savePost() async {
     final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      throw Exception('User not found.');
-    }
+    if (currentUser == null) throw Exception('User not found.');
 
     if (_selectedImages.isEmpty &&
         _selectedVideos.isEmpty &&
@@ -131,6 +134,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     print('🎉 Post saved!');
   }
 
+  // PUBLISH POST
   void _publishPost() async {
     if (_contentController.text.trim().isEmpty &&
         _selectedImages.isEmpty &&
@@ -176,7 +180,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Content
+            // CONTENT
             TextField(
               controller: _contentController,
               maxLines: 5,
@@ -187,9 +191,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
+
             _buildMediaPreview(),
             const SizedBox(height: 16),
-            // Media buttons
+
+            // MEDIA BUTTONS
             Row(
               children: [
                 Expanded(
@@ -218,7 +224,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            // Tags
+
+            // TAGS
             const Text(
               'Tags',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -267,13 +274,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 
+  // MEDIA PREVIEW
   Widget _buildMediaPreview() {
     List<Widget> previews = [];
 
     for (int i = 0; i < _selectedImages.length; i++) {
       previews.add(_mediaTile(_selectedImages[i].path, i, 'image'));
     }
-
     for (int i = 0; i < _selectedVideos.length; i++) {
       previews.add(_mediaTile(_selectedVideos[i].path, i, 'video'));
     }
@@ -297,7 +304,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Widget _mediaTile(String path, int index, String type) {
-    IconData icon = type == 'image' ? Icons.image : Icons.videocam;
+    IconData icon;
+    if (type == 'image')
+      icon = Icons.image;
+    else
+      icon = Icons.videocam;
 
     return Stack(
       children: [
