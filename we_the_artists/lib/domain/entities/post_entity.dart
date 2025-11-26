@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostEntity extends Equatable {
   final String id;
@@ -9,8 +10,8 @@ class PostEntity extends Equatable {
   final String userAvatarUrl;
   final String content;
   final List<String> imageUrls;
-  final List<String> videoUrls; // added
-  final List<String> audioUrls; // added
+  final List<String> videoUrls;
+  final List<String> audioUrls;
   final List<String> tags;
   final int likes;
   final int comments;
@@ -94,4 +95,48 @@ class PostEntity extends Equatable {
     isSaved,
     createdAt,
   ];
+
+  /// Factory to create PostEntity from Firestore doc, including likes/saves tracking
+  factory PostEntity.fromFirestore(
+    Map<String, dynamic> data,
+    String docId,
+    String currentUserId,
+  ) {
+    return PostEntity(
+      id: docId,
+      userId: data['userId'] ?? '',
+      userName: data['userName'] ?? 'Unknown',
+      userRole: data['userRole'] ?? '',
+      userLocation: data['userLocation'] ?? '',
+      userAvatarUrl: data['userAvatarUrl'] ?? '',
+      content: data['content'] ?? '',
+      imageUrls:
+          (data['imageUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      videoUrls:
+          (data['videoUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      audioUrls:
+          (data['audioUrls'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      tags:
+          (data['tags'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          [],
+      likes: (data['likedBy'] as List<dynamic>?)?.length ?? 0,
+      comments: data['comments'] is int
+          ? data['comments']
+          : 0, // keeps backward compatibility
+      isLiked:
+          (data['likedBy'] as List<dynamic>?)?.contains(currentUserId) ?? false,
+      isSaved:
+          (data['savedBy'] as List<dynamic>?)?.contains(currentUserId) ?? false,
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
+  }
 }

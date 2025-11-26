@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/avatar_gradients.dart';
+import '../widgets/animated_gradient_avatar.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
-import '../utils/avatar_gradients.dart';
-import '../widgets/animated_gradient_avatar.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -66,6 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -95,115 +98,129 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<NotificationBloc, NotificationState>(
-        builder: (context, state) {
-          if (state is NotificationLoading) {
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        // Listen to notifications for the current user
+        stream: FirebaseFirestore.instance
+            .collection('Notifications')
+            .where('recipientId', isEqualTo: currentUserId)
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is NotificationLoaded) {
-            if (state.notifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.notifications_none,
-                      size: 64,
-                      color: Colors.grey[400],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No notifications yet',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              );
-            }
+          }
 
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: state.notifications.length,
-              itemBuilder: (context, index) {
-                final notification = state.notifications[index];
-                final colors = AvatarGradients.getGradientForUser(
-                  notification.userId,
-                );
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.notifications_none,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No notifications yet',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
+          }
 
-                return Container(
-                  color: notification.isRead
-                      ? Colors.transparent
-                      : theme.brightness == Brightness.dark
-                      ? Colors.blue.withOpacity(0.1)
-                      : Colors.blue.withOpacity(0.05),
-                  child: ListTile(
-                    leading: Stack(
-                      children: [
-                        AnimatedGradientAvatar(
-                          initials: notification.userName
-                              .split(' ')
-                              .map((n) => n[0])
-                              .take(2)
-                              .join()
-                              .toUpperCase(),
-                          size: 48,
-                          gradientColors: colors,
-                        ),
-                        Positioned(
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: _getColorForType(notification.type),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: theme.scaffoldBackgroundColor,
-                                width: 2,
-                              ),
-                            ),
-                            child: Icon(
-                              _getIconForType(notification.type),
-                              size: 12,
-                              color: Colors.white,
+          final notifications = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: notifications.length,
+            itemBuilder: (context, index) {
+              final notificationData = notifications[index].data();
+              final notificationId = notifications[index].id;
+
+              final userId = notificationData['userId'] ?? '';
+              final userName = notificationData['userName'] ?? 'Someone';
+              final type = notificationData['type'] ?? 'notification';
+              final message = notificationData['message'] ?? '';
+              final isRead = notificationData['isRead'] ?? false;
+              final createdAt = (notificationData['createdAt'] as Timestamp)
+                  .toDate();
+
+              final colors = AvatarGradients.getGradientForUser(userId);
+
+              return Container(
+                color: isRead
+                    ? Colors.transparent
+                    : theme.brightness == Brightness.dark
+                    ? Colors.blue.withOpacity(0.1)
+                    : Colors.blue.withOpacity(0.05),
+                child: ListTile(
+                  leading: Stack(
+                    children: [
+                      AnimatedGradientAvatar(
+                        initials: userName
+                            .split(' ')
+                            .map((n) => n[0])
+                            .take(2)
+                            .join()
+                            .toUpperCase(),
+                        size: 48,
+                        gradientColors: colors,
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: _getColorForType(type),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.scaffoldBackgroundColor,
+                              width: 2,
                             ),
                           ),
+                          child: Icon(
+                            _getIconForType(type),
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
+                      ),
+                    ],
+                  ),
+                  title: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        color: theme.textTheme.bodyLarge?.color,
+                        fontSize: 14,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: userName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(text: ' $message'),
                       ],
                     ),
-                    title: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: theme.textTheme.bodyLarge?.color,
-                          fontSize: 14,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: notification.userName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(text: ' ${notification.message}'),
-                        ],
-                      ),
-                    ),
-                    subtitle: Text(
-                      _formatTime(notification.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                    onTap: () {
-                      if (!notification.isRead) {
-                        context.read<NotificationBloc>().add(
-                          MarkAsRead(notification.id),
-                        );
-                      }
-                    },
                   ),
-                );
-              },
-            );
-          } else if (state is NotificationError) {
-            return Center(child: Text('Error: ${state.message}'));
-          }
-          return const SizedBox();
+                  subtitle: Text(
+                    _formatTime(createdAt),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+                  onTap: () {
+                    if (!isRead) {
+                      FirebaseFirestore.instance
+                          .collection('Notifications')
+                          .doc(notificationId)
+                          .update({'isRead': true});
+                    }
+                  },
+                ),
+              );
+            },
+          );
         },
       ),
     );

@@ -214,14 +214,6 @@ class _HomeFeedScreenState extends State<HomeFeedScreen> {
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.event),
-                    title: const Text('Events'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.pushNamed(context, '/event'); // reverted
-                    },
-                  ),
-                  ListTile(
                     leading: const Icon(Icons.logout),
                     title: const Text('Logout'),
                     onTap: () async {

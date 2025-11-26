@@ -1,38 +1,103 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/notification_entity.dart';
 import 'notification_event.dart';
 import 'notification_state.dart';
 
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
-  final List<NotificationEntity> _notifications = [];
-
   NotificationBloc() : super(const NotificationInitial()) {
     on<LoadNotifications>(_onLoadNotifications);
     on<MarkAsRead>(_onMarkAsRead);
     on<ClearAllNotifications>(_onClearAll);
-    on<AddMentionNotification>(_onAddMentionNotification);
   }
 
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
   Future<void> _onLoadNotifications(
-      LoadNotifications event, Emitter<NotificationState> emit) async {
+    LoadNotifications event,
+    Emitter<NotificationState> emit,
+  ) async {
     emit(const NotificationLoading());
 
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
+      // Fetch all posts
+      final snapshot = await _firestore.collection('Posts').get();
+      final posts = snapshot.docs;
 
-      final mockNotifications = _getMockNotifications();
-      // Combine mock notifications with real mention notifications
-      final allNotifications = [...mockNotifications, ..._notifications];
-      // Sort by createdAt descending
-      allNotifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      emit(NotificationLoaded(allNotifications));
+      List<NotificationEntity> notifications = [];
+
+      for (var postDoc in posts) {
+        final post = postDoc.data();
+        final postId = postDoc.id;
+        final postOwnerId = post['userId'];
+
+        // Only notifications for the current user
+        if (postOwnerId == _currentUserId) {
+          // Likes
+          if (post['likes'] != null) {
+            for (var likerId in List<String>.from(post['likes'])) {
+              if (likerId != _currentUserId) {
+                notifications.add(
+                  NotificationEntity(
+                    id: 'like_${postId}_$likerId',
+                    type: 'like',
+                    userId: likerId,
+                    userName:
+                        '', // you can fetch username from Users collection
+                    message: 'liked your post',
+                    createdAt: post['createdAt']?.toDate() ?? DateTime.now(),
+                    isRead: false,
+                  ),
+                );
+              }
+            }
+          }
+
+          // Comments
+          final commentsSnapshot = await _firestore
+              .collection('Posts')
+              .doc(postId)
+              .collection('Comments')
+              .get();
+          for (var commentDoc in commentsSnapshot.docs) {
+            final comment = commentDoc.data();
+            final commenterId = comment['userId'];
+            if (commenterId != _currentUserId) {
+              notifications.add(
+                NotificationEntity(
+                  id: 'comment_${commentDoc.id}',
+                  type: 'comment',
+                  userId: commenterId,
+                  userName:
+                      '', // fetch username from Users collection if needed
+                  message: 'commented on your post',
+                  createdAt: comment['createdAt']?.toDate() ?? DateTime.now(),
+                  isRead: false,
+                ),
+              );
+            }
+          }
+
+          // Mentions in post content or comments (optional)
+          // TODO: parse content for mentions and add NotificationEntity
+        }
+      }
+
+      // Sort by newest first
+      notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      emit(NotificationLoaded(notifications));
     } catch (e) {
       emit(NotificationError(e.toString()));
     }
   }
 
   Future<void> _onMarkAsRead(
-      MarkAsRead event, Emitter<NotificationState> emit) async {
+    MarkAsRead event,
+    Emitter<NotificationState> emit,
+  ) async {
     if (state is NotificationLoaded) {
       final currentState = state as NotificationLoaded;
       final updated = currentState.notifications.map((n) {
@@ -55,70 +120,23 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   }
 
   Future<void> _onClearAll(
-      ClearAllNotifications event, Emitter<NotificationState> emit) async {
-    _notifications.clear();
-    emit(const NotificationLoaded([]));
-  }
-
-  Future<void> _onAddMentionNotification(
-      AddMentionNotification event, Emitter<NotificationState> emit) async {
-    final newNotification = NotificationEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      type: 'mention',
-      userId: event.mentionerUserId,
-      userName: event.mentionerUserName,
-      message: 'mentioned you in a post',
-      createdAt: DateTime.now(),
-      isRead: false,
-    );
-
-    _notifications.insert(0, newNotification);
-
+    ClearAllNotifications event,
+    Emitter<NotificationState> emit,
+  ) async {
     if (state is NotificationLoaded) {
       final currentState = state as NotificationLoaded;
-      final updated = [newNotification, ...currentState.notifications];
-      emit(NotificationLoaded(updated));
+      final cleared = currentState.notifications.map((n) {
+        return NotificationEntity(
+          id: n.id,
+          type: n.type,
+          userId: n.userId,
+          userName: n.userName,
+          message: n.message,
+          createdAt: n.createdAt,
+          isRead: true,
+        );
+      }).toList();
+      emit(NotificationLoaded(cleared));
     }
-  }
-
-  List<NotificationEntity> _getMockNotifications() {
-    return [
-      NotificationEntity(
-        id: '1',
-        type: 'like',
-        userId: '2',
-        userName: 'Sarah Johnson',
-        message: 'liked your post',
-        createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-        isRead: false,
-      ),
-      NotificationEntity(
-        id: '2',
-        type: 'comment',
-        userId: '3',
-        userName: 'David Kamau',
-        message: 'commented on your post',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        isRead: false,
-      ),
-      NotificationEntity(
-        id: '3',
-        type: 'follow',
-        userId: '4',
-        userName: 'Emma Williams',
-        message: 'started following you',
-        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-        isRead: true,
-      ),
-      NotificationEntity(
-        id: '4',
-        type: 'mention',
-        userId: '2',
-        userName: 'Sarah Johnson',
-        message: 'mentioned you in a post',
-        createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-        isRead: false,
-      ),
-    ];
   }
 }

@@ -83,11 +83,12 @@ class _PostCardState extends State<PostCard>
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null || text.trim().isEmpty) return;
 
-    final commentRef = FirebaseFirestore.instance
+    final postRef = FirebaseFirestore.instance
         .collection('Posts')
-        .doc(widget.post.id)
-        .collection('comments');
+        .doc(widget.post.id);
+    final commentRef = postRef.collection('comments');
 
+    // Add comment
     await commentRef.add({
       'text': text.trim(),
       'userId': currentUser.uid,
@@ -95,11 +96,26 @@ class _PostCardState extends State<PostCard>
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Optional: increment post's comment count
-    await FirebaseFirestore.instance
-        .collection('Posts')
-        .doc(widget.post.id)
-        .update({'comments': FieldValue.increment(1)});
+    // Increment post's comment count
+    await postRef.update({'comments': FieldValue.increment(1)});
+
+    // Add notification for the post owner
+    if (currentUser.uid != widget.post.userId) {
+      final notificationRef = FirebaseFirestore.instance
+          .collection('Users')
+          .doc(widget.post.userId)
+          .collection('notifications');
+
+      await notificationRef.add({
+        'type': 'comment',
+        'userId': currentUser.uid,
+        'userName': currentUser.displayName ?? 'Anonymous',
+        'postId': widget.post.id,
+        'message': 'commented on your post',
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    }
   }
 
   void _showCommentsDialog() {

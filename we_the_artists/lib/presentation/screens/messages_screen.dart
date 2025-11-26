@@ -1,39 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/message_entity.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/avatar_gradients.dart';
 import '../widgets/animated_gradient_avatar.dart';
 
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({super.key});
-
-  List<MessageEntity> _getMockMessages() {
-    return [
-      MessageEntity(
-        id: '1',
-        senderId: '2',
-        senderName: 'Sarah Johnson',
-        content: 'Hey, I love your latest artwork!',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-        isRead: false,
-      ),
-      MessageEntity(
-        id: '2',
-        senderId: '3',
-        senderName: 'David Kamau',
-        content: 'Are you available for a collaboration?',
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-        isRead: true,
-      ),
-      MessageEntity(
-        id: '3',
-        senderId: '4',
-        senderName: 'Emma Williams',
-        content: 'Thanks for the follow!',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        isRead: true,
-      ),
-    ];
-  }
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -48,10 +20,49 @@ class MessagesScreen extends StatelessWidget {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _fetchComments(
+    String currentUserId,
+  ) async {
+    final postsSnapshot = await FirebaseFirestore.instance
+        .collection('Posts')
+        .where('userId', isEqualTo: currentUserId)
+        .get();
+
+    final List<Map<String, dynamic>> comments = [];
+
+    for (var postDoc in postsSnapshot.docs) {
+      final postId = postDoc.id;
+      final commentSnapshot = await FirebaseFirestore.instance
+          .collection('Posts')
+          .doc(postId)
+          .collection('comments')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      for (var c in commentSnapshot.docs) {
+        final data = c.data();
+        comments.add({
+          'postId': postId,
+          'commentId': c.id,
+          'content': data['text'] ?? '',
+          'senderId': data['userId'] ?? '',
+          'senderName': data['userName'] ?? 'Unknown',
+          'timestamp':
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        });
+      }
+    }
+
+    // Sort all comments by timestamp descending
+    comments.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
+
+    return comments;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final messages = _getMockMessages();
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -63,7 +74,7 @@ class MessagesScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Messages',
+          'Comments & Messages',
           style: TextStyle(
             color: theme.textTheme.bodyLarge?.color,
             fontSize: 20,
@@ -71,99 +82,71 @@ class MessagesScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: messages.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.message_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No messages yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                final colors = AvatarGradients.getGradientForUser(
-                  message.senderId,
-                );
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _fetchComments(currentUserId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                return ListTile(
-                  leading: AnimatedGradientAvatar(
-                    initials: message.senderName
-                        .split(' ')
-                        .map((n) => n[0])
-                        .take(2)
-                        .join()
-                        .toUpperCase(),
-                    size: 50,
-                    gradientColors: colors,
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No comments yet.'));
+          }
+
+          final comments = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            itemCount: comments.length,
+            itemBuilder: (context, index) {
+              final comment = comments[index];
+              final colors = AvatarGradients.getGradientForUser(
+                comment['senderId'],
+              );
+
+              return ListTile(
+                leading: AnimatedGradientAvatar(
+                  initials: comment['senderName']
+                      .split(' ')
+                      .map((n) => n[0])
+                      .take(2)
+                      .join()
+                      .toUpperCase(),
+                  size: 50,
+                  gradientColors: colors,
+                ),
+                title: Text(
+                  comment['senderName'],
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
-                  title: Text(
-                    message.senderName,
-                    style: TextStyle(
-                      fontWeight:
-                          message.isRead ? FontWeight.normal : FontWeight.bold,
-                      color: theme.textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  subtitle: Text(
-                    message.content,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: message.isRead ? Colors.grey[600] : Colors.black,
-                      fontWeight:
-                          message.isRead ? FontWeight.normal : FontWeight.w500,
-                    ),
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        _formatTime(message.timestamp),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                ),
+                subtitle: Text(
+                  comment['content'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                trailing: Text(
+                  _formatTime(comment['timestamp']),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Opening comment on post ${comment['postId']}',
                       ),
-                      if (!message.isRead) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.blue,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Opening chat with ${message.senderName}'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

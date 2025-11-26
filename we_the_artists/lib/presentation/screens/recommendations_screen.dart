@@ -1,43 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../utils/avatar_gradients.dart';
 import '../widgets/animated_gradient_avatar.dart';
 
 class RecommendationsScreen extends StatelessWidget {
   const RecommendationsScreen({super.key});
 
-  List<Map<String, String>> _getRecommendedArtists() {
-    return [
-      {
-        'id': '6',
-        'name': 'Lisa Anderson',
-        'role': 'Abstract Artist',
-        'location': 'Lagos',
-      },
-      {
-        'id': '7',
-        'name': 'James Mwangi',
-        'role': 'Street Artist',
-        'location': 'Nairobi',
-      },
-      {
-        'id': '8',
-        'name': 'Amara Okafor',
-        'role': 'Digital Illustrator',
-        'location': 'Accra',
-      },
-      {
-        'id': '9',
-        'name': 'Sophie Laurent',
-        'role': 'Watercolor Artist',
-        'location': 'Kigali',
-      },
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final artists = _getRecommendedArtists();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -57,89 +28,114 @@ class RecommendationsScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        itemCount: artists.length,
-        itemBuilder: (context, index) {
-          final artist = artists[index];
-          final colors = AvatarGradients.getGradientForUser(
-            artist['id']!,
-          );
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance.collection('Users').snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No users found.'));
+          }
+
+          final users = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            itemCount: users.length,
+            itemBuilder: (context, index) {
+              final userData = users[index].data();
+              final userId = users[index].id;
+              final name = userData['name'] ?? 'Unknown';
+              final role = userData['role'] ?? '';
+              final location = userData['location'] ?? '';
+              final avatarUrl = userData['avatarUrl'] ?? '';
+
+              final colors = AvatarGradients.getGradientForUser(userId);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                AnimatedGradientAvatar(
-                  initials: artist['name']!
-                      .split(' ')
-                      .map((n) => n[0])
-                      .take(2)
-                      .join()
-                      .toUpperCase(),
-                  size: 60,
-                  gradientColors: colors,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        artist['name']!,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: theme.textTheme.bodyLarge?.color,
+                child: Row(
+                  children: [
+                    avatarUrl.isNotEmpty
+                        ? CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(avatarUrl),
+                          )
+                        : AnimatedGradientAvatar(
+                            initials: name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .take(2)
+                                .join()
+                                .toUpperCase(),
+                            size: 60,
+                            gradientColors: colors,
+                          ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textTheme.bodyLarge?.color,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$role · $location',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        // TODO: implement follow/unfollow logic
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Following $name'),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 10,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${artist['role']} · ${artist['location']}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Following ${artist['name']}'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      child: const Text('Follow'),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 10,
-                    ),
-                  ),
-                  child: const Text('Follow'),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
